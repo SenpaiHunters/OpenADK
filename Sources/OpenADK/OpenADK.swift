@@ -22,6 +22,7 @@ public class Alto {
     public let downloadManager: String? // ToDo
     public let modelManager: String? // ToDo (This will be AI intigration for local and cloud based LLMs)
     public let searchManager: SearchManager
+    
     private init() {
         self.configuration = nil
         
@@ -32,5 +33,13 @@ public class Alto {
         self.downloadManager = ""
         self.modelManager = ""
         self.searchManager = SearchManager()
+    }
+}
+
+// Dummy class that is for later
+public class AltoTab {
+    
+    public init() {
+        
     }
 }

@@ -47,7 +47,7 @@
 /* Begin PBXFileReference section */
 		C449FA3E2DFFCFC400C05EF4 /* OpenADK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OpenADK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C449FA492DFFCFC400C05EF4 /* OpenADKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenADKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		C4AFFE2F2E00A567001D60F8 /* OpenADKObjectiveC.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = OpenADKObjectiveC.framework; path = /Users/hensonliga/Development/AltoBrowser/OpenADK/build/Debug/OpenADKObjectiveC.framework; sourceTree = "<absolute>"; };
+		C473AB652E0110DF00139C76 /* OpenADKObjectiveC.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OpenADKObjectiveC.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C4AFFE462E00AB1B001D60F8 /* OpenADKObjC.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OpenADKObjC.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C4D5A4D02DFFDCC900002E71 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -159,6 +159,7 @@
 				C449FA3E2DFFCFC400C05EF4 /* OpenADK.framework */,
 				C449FA492DFFCFC400C05EF4 /* OpenADKTests.xctest */,
 				C4AFFE462E00AB1B001D60F8 /* OpenADKObjC.framework */,
+				C473AB652E0110DF00139C76 /* OpenADKObjectiveC.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -253,7 +254,7 @@
 			packageProductDependencies = (
 			);
 			productName = OpenADKObjectiveC;
-			productReference = C4AFFE2F2E00A567001D60F8 /* OpenADKObjectiveC.framework */;
+			productReference = C473AB652E0110DF00139C76 /* OpenADKObjectiveC.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		C4AFFE452E00AB1B001D60F8 /* OpenADKObjC */ = {
