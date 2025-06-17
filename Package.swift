@@ -15,9 +15,9 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "OpenADKObjC",
-            path: "Sources/OpenADKObjC",
-            publicHeadersPath: "." // Exposes OpenADKObjC.h + WKWebsiteDataStore+Private.h
+          name: "OpenADKObjC",
+          path: "Sources/OpenADKObjC",
+          publicHeadersPath: "."
         ),
         .target(
             name: "OpenADK",

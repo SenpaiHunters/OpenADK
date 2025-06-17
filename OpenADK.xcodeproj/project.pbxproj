@@ -47,7 +47,7 @@
 /* Begin PBXFileReference section */
 		C449FA3E2DFFCFC400C05EF4 /* OpenADK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OpenADK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C449FA492DFFCFC400C05EF4 /* OpenADKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenADKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		C4AFFE2F2E00A567001D60F8 /* OpenADKObjectiveC.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OpenADKObjectiveC.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C4AFFE2F2E00A567001D60F8 /* OpenADKObjectiveC.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = OpenADKObjectiveC.framework; path = /Users/hensonliga/Development/AltoBrowser/OpenADK/build/Debug/OpenADKObjectiveC.framework; sourceTree = "<absolute>"; };
 		C4AFFE462E00AB1B001D60F8 /* OpenADKObjC.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OpenADKObjC.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C4D5A4D02DFFDCC900002E71 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -150,7 +150,6 @@
 				C4D5A4DA2DFFDF3D00002E71 /* Tests */,
 				C449FA3F2DFFCFC400C05EF4 /* Products */,
 				C4D5A4D02DFFDCC900002E71 /* Package.swift */,
-				C4AFFE5B2E00B306001D60F8 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -159,17 +158,9 @@
 			children = (
 				C449FA3E2DFFCFC400C05EF4 /* OpenADK.framework */,
 				C449FA492DFFCFC400C05EF4 /* OpenADKTests.xctest */,
-				C4AFFE2F2E00A567001D60F8 /* OpenADKObjectiveC.framework */,
 				C4AFFE462E00AB1B001D60F8 /* OpenADKObjC.framework */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		C4AFFE5B2E00B306001D60F8 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -465,12 +456,15 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /Users/hensonliga/Development/AltoBrowser/OpenADK/Sources/OpenADKObjC;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SYSTEM_HEADER_SEARCH_PATHS = /Users/hensonliga/Development/AltoBrowser/OpenADK/Sources/OpenADKObjC;
+				USER_HEADER_SEARCH_PATHS = /Users/hensonliga/Development/AltoBrowser/OpenADK/Sources/OpenADKObjC;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 			};
@@ -524,10 +518,13 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /Users/hensonliga/Development/AltoBrowser/OpenADK/Sources/OpenADKObjC;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SYSTEM_HEADER_SEARCH_PATHS = /Users/hensonliga/Development/AltoBrowser/OpenADK/Sources/OpenADKObjC;
+				USER_HEADER_SEARCH_PATHS = /Users/hensonliga/Development/AltoBrowser/OpenADK/Sources/OpenADKObjC;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 			};
