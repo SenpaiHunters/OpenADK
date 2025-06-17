@@ -24,6 +24,10 @@ public struct DefaultWindowConfiguration {
         return CGPoint(x: 0, y: 0)
     }
     
+    public init() {
+        
+    }
+    
     /// Note: the functions must be marked with mutating in order to change the value of the struct
     
     /// Handles swiftUI Views
@@ -40,7 +44,7 @@ public struct DefaultWindowConfiguration {
 
 /// Handles creating Browser Windows
 final public class WindowManager {
-    private let alto = Alto.shared
+    // private let alto = Alto.shared
     private var altoState: AltoState?
     
     public var configuration: DefaultWindowConfiguration
@@ -67,7 +71,7 @@ final public class WindowManager {
     
     /// Creates a browser window with tabs
     @discardableResult
-    public func createWindow(tabs: [AltoTab]) throws -> AltoWindow? {
+    public func createWindow(tabs: [AltoTab]) -> AltoWindow? {
         let browserView = configuration.browserView
         
         if let browserView {
@@ -75,7 +79,7 @@ final public class WindowManager {
             
             return window
         } else {
-            throw WindowErrors.contentViewNilValue
+            return nil
         }
     }
 }
