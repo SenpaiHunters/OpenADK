@@ -16,7 +16,7 @@ public class Alto {
     public var tabs: [String] = [] // This will need to pull from storage
     
     public let windowManager: WindowManager
-    public let cookieManager: String?
+    public let cookieManager: CookiesManager
     public let contextManager: String?
     public let paswordManager: String? // ToDo
     public let downloadManager: String? // ToDo
@@ -27,11 +27,11 @@ public class Alto {
         self.configuration = nil
         
         self.windowManager = WindowManager()
-        self.cookieManager = ""
-        self.contextManager = ""
-        self.paswordManager = ""
-        self.downloadManager = ""
-        self.modelManager = ""
+        self.cookieManager = CookiesManager()
+        self.contextManager = nil
+        self.paswordManager = nil
+        self.downloadManager = nil
+        self.modelManager = nil
         self.searchManager = SearchManager()
     }
 }
