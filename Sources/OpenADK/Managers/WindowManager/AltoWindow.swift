@@ -3,23 +3,23 @@ import AppKit
 
 
 public class AltoWindow: NSWindow {
-    private var state: StateProtocol
+    public var id = UUID()
+    private var state: any StateProtocol
     
-    init(contentRect: NSRect, content: () -> (NSView & BrowserView), state: StateProtocol, title: String? = nil, isIncognito: Bool = false, minimumSize: CGSize? = nil) {
+    init(contentRect: NSRect, contentView: NSView, state: any StateProtocol, title: String? = nil, isIncognito: Bool = false, minimumSize: CGSize? = nil) {
         self.state = state
         
         super.init(contentRect: contentRect, styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                    backing: .buffered, defer: false)
         
-        // more will go in this class but im in the middle of a rewrite
-        
-        var contentView = content()
-        contentView.state = self.state
+        self.title = id.uuidString
+        self.state.window = self
         self.contentView = contentView
     }
 }
 
 
+
 public protocol BrowserView {
-    var state: StateProtocol { get set }
+    var state: any StateProtocol { get set }
 }

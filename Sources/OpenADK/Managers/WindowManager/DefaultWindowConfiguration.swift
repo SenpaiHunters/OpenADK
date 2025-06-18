@@ -8,8 +8,9 @@ public struct DefaultWindowConfiguration {
     public let defaultMinimumSize = CGSize(width: 500, height: 400)
     public let defaultSize = CGSize(width: 1024, height: 768)
     
-    public var browserView: (() -> (NSView & BrowserView))?
-    public var state: (any StateProtocol)?
+    public var viewFactory: ((any StateProtocol) -> (NSView & BrowserView))?
+        
+    public var stateFactory: () -> any StateProtocol = { AltoState() }
     
     public var windowRec: NSRect {
         return NSRect(x: defaultPoint.x, y: defaultPoint.y, width: defaultSize.width, height: defaultSize.height)
@@ -26,26 +27,23 @@ public struct DefaultWindowConfiguration {
         return CGPoint(x: 0, y: 0)
     }
     
-    public init(state: (any StateProtocol)? = nil) {
+    public init() {
         
     }
-    
     /// Note to devs: the functions must be marked with mutating in order to change the value of the struct
     
     /// Handles swiftUI Views
-    public mutating func setView<V: View>(_ viewBuilder: @escaping (() -> V)) {
-        let capturedState = self.state ?? AltoState()
-        browserView = {
-            HostingBrowserView(rootView: viewBuilder(), state: capturedState)
+    public mutating func setView<V: View>(_ viewBuilder: @escaping ((any StateProtocol) -> V)) {
+            self.viewFactory = { state in
+                HostingBrowserView(rootView: viewBuilder(state), state: state)
+            }
         }
-    }
 
 
     /// Handles AppKit Views
-    public mutating func setView(_ viewBuilder: @escaping () -> (NSView & BrowserView)) {
-        browserView = viewBuilder
+    public mutating func setView(_ viewBuilder: @escaping ((any StateProtocol) -> (NSView & BrowserView))) {
+            self.viewFactory = viewBuilder
     }
-
 }
 
 public class HostingBrowserView<V: View>: NSHostingView<V>, BrowserView {

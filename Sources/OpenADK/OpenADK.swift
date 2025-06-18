@@ -14,7 +14,7 @@ public class Alto {
     public let configuration: AltoConfiguration?
     
     public var tabs: [UUID:(any TabProtocol)] = [:] // This will need to pull from storage
-    public var spaces: [Space] = []
+    public var spaces: [SpaceProtocol] = []
     public var profiles: String?
     
     public let windowManager: WindowManager
@@ -37,9 +37,13 @@ public class Alto {
         self.modelManager = nil
         self.searchManager = SearchManager()
         self.faviconHandler = FaviconHandler()
+        
+        if spaces.isEmpty {
+            spaces.append(Space())
+        }
     }
     
-    func getTab(id: UUID) -> (any TabProtocol)? {
+    public func getTab(id: UUID) -> (any TabProtocol)? {
         let tab = self.tabs.first(where: { $0.key == id})?.value
         return tab
     }
