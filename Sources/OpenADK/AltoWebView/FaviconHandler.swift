@@ -10,13 +10,10 @@ public class FaviconHandler {
             "document.querySelector(\"link[rel~='icon']\")?.href"
         ) { result, error in
             if let value = result as? String {
-                print("VALUE: ", value)
-                print("Favicon URL from JS:", value)
                 nsImage = self.downloadFavicon(from: value)
             } else {
                 if let host = webView.url?.host {
                     let fallbackFavicon = "https://\(host)/favicon.ico"
-                    print("Using fallback favicon:", fallbackFavicon)
                     nsImage =  self.downloadFavicon(from: fallbackFavicon)
                 }
             }

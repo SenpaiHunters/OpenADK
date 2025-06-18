@@ -20,7 +20,6 @@ public class TabsManager: TabManagerProtocol {
     
     public func setActiveTab(_ tab: any TabProtocol) {
         self.state?.currentSpace?.currentTab = tab
-        print("ran")
     }
     
     
@@ -51,7 +50,7 @@ public class TabsManager: TabManagerProtocol {
         return allLocations.first(where: { $0.name == location })
     }
     
-    public func createNewTab(url: String = "https://www.google.com/", frame: CGRect = .zero, configuration: WKWebViewConfiguration = AltoWebViewConfigurationBase(), location: String = "") {
+    public func createNewTab(url: String = "https://www.google.com/", frame: CGRect = .zero, configuration: WKWebViewConfiguration = AltoWebViewConfigurationBase(), location: String = "unpinned") {
         guard let state = self.state else {
             return
         }
@@ -67,11 +66,13 @@ public class TabsManager: TabManagerProtocol {
         if let url = URL(string: url) {
             let request = URLRequest(url: url)
             newWebView.load(request)
-            print("LOADS:", url)
         }
-        
-        let newWebPage = WebPage(webView: newWebView, state: state)
         let newTab = Tab(state: state)
+        newTab.location = tabLocation
+        
+        let newWebPage = WebPage(webView: newWebView, state: state, parent: newTab)
+        newWebPage.parent = newTab
+        
         newTab.setContent(content: newWebPage)
         
         let tabRep = TabRepresentation(id: newTab.id, index: tabLocation.tabs.count)

@@ -14,15 +14,19 @@ public protocol TabProtocol: NSObject, Identifiable {
     var location: TabLocationProtocol? { get set }
     var content: [Displayable] { get set }
     var state: any StateProtocol { get set }
-    var mannager: TabManagerProtocol? { get }
+    var manager: TabManagerProtocol? { get }
+    var isCurrentTab: Bool { get }
+    var tabRepresentation: TabRepresentation? { get set }
     
     func setContent(content addedContent: any Displayable)
     func closeTab()
 }
 
-
+@Observable
 public class Tab: NSObject, Identifiable, TabProtocol {
     public let id = UUID()
+    
+    public var tabRepresentation: TabRepresentation?
     
     public var location: (any TabLocationProtocol)?
     
@@ -30,17 +34,23 @@ public class Tab: NSObject, Identifiable, TabProtocol {
     
     public var state: any StateProtocol
     
-    public var mannager: (any TabManagerProtocol)? {
+    public var manager: (any TabManagerProtocol)? {
         state.tabManager
+    }
+    public var isCurrentTab: Bool {
+        return state.currentSpace?.currentTab?.id == self.id
     }
     
     init(state: any StateProtocol) {
         self.state = state
-        
     }
     
     public func setContent(content addedContent: any Displayable) {
-        self.content.append(addedContent)
+        if self.content.count > 0 {
+            self.content[0] = addedContent
+        } else {
+            self.content.append(addedContent)
+        }
     }
     
     public func createNewTab(_ url: String, _ configuration: WKWebViewConfiguration, frame: CGRect = .zero) {
@@ -48,9 +58,19 @@ public class Tab: NSObject, Identifiable, TabProtocol {
     }
     
     public func closeTab() {
+        self.location?.removeTab(id: self.id)
+        self.state.tabManager.removeTab(self.id)
         
+        for c in content {
+            c.removeWebView()
+        }
+                
+        if isCurrentTab {
+            state.currentSpace?.currentTab = nil
+        }
     }
 }
+
 
 /*
 public class Folder: NSObject, Identifiable, TabProtocol {
@@ -77,33 +97,13 @@ public class Folder: NSObject, Identifiable, TabProtocol {
 }
 
 
-
-public class splitView: NSObject, Identifiable, TabProtocol {
-    public let id = UUID()
-    
-    public var location: (any TabLocationProtocol)?
-    
-    public var content: [any Displayable]?
-    
-    public var state: any StateProtocol
-    
-    public var mannager: (any TabManagerProtocol)? {
-        state.tabManager
-    }
-    
-    init(state: StateProtocol, ) {
-        self.state = state
-        
-    }
-    
-    public func closeTab() {
-        <#code#>
-    }
-}
  */
+
 
 /// This can be the content inside a tab
 public protocol Displayable {
+    var parent: (any TabProtocol)? { get set }
+    
     var id: UUID { get }
     var title: String { get set }
     var favicon: NSImage? { get set }
@@ -122,6 +122,8 @@ public protocol Displayable {
 
 @Observable
 public class WebPage: NSObject, Identifiable, Displayable {
+    public var parent: (any TabProtocol)?
+    
     private var state: any StateProtocol
     
     public let id = UUID()
@@ -146,7 +148,7 @@ public class WebPage: NSObject, Identifiable, Displayable {
     public var uiDownloadDelegate: WKDownloadDelegate?
     public var navigationDelegate: WKNavigationDelegate?
     
-    init(webView: AltoWebView, state: any StateProtocol) {
+    init(webView: AltoWebView, state: any StateProtocol, parent: (any TabProtocol)? = nil) {
         self.webView = webView
         self.state = state
         
@@ -158,13 +160,14 @@ public class WebPage: NSObject, Identifiable, Displayable {
     }
     
     public func createNewTab(_ url: String, _ configuration: WKWebViewConfiguration, frame: CGRect) {
-        print("Placeholder")
-        #warning("add new tab logic")
+        
     }
     
     // This will deinit the webview and remove it from its parent
     public func removeWebView() {
-        
+        self.webView.stopLoading()
+        self.webView.delegate = nil
+        self.webView.navigationDelegate = nil
     }
     
     public func returnView() -> any View {
@@ -183,13 +186,13 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
         self.favicon = Alto.shared.faviconHandler.getFavicon(webView)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            print("start")
-            // Alto.shared.contextManager.pullContextFromPage(for: webView)
+            
         }
     }
     
     public func webViewDidClose(_ webView: WKWebView) {
-        #warning("add close functionality")
+        self.parent?.closeTab()
+    
     }
     
     // This checks for new Window Requests from tabs
@@ -197,7 +200,7 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
                         createWebViewWith configuration: WKWebViewConfiguration,
                         for navigationAction: WKNavigationAction,
                         windowFeatures: WKWindowFeatures) -> WKWebView? {
-        
+
         // If targetFrame is nil, this means the navigation action is targeting a new frame
         // that doesn't exist (otherwise the frame wouldnt be nil) in the current web view.
         // This happens when the web content tries to open a new window or tab.
@@ -206,13 +209,44 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
             
             // The navigation type is .other when it is like a login otherwise its just a normal open request
             if navigationAction.navigationType == .other {
-                
-                
+                print("Opened a login tab")
             } else if let url = navigationAction.request.url?.absoluteString {
                 
+                if let url = URL(string: url) {
+                    let request = URLRequest(url: url)
+                    newWebView.load(request)
+                }
+                
             }
+            
+            let newWebPage = WebPage(webView: newWebView, state: state)
+            let newTab = Tab(state: state)
+            newTab.location = self.parent?.location
+            newTab.setContent(content: newWebPage)
+            newWebPage.parent = newTab
+            
+            let newTabIndex = self.parent?.tabRepresentation?.index ?? 0 // ToDo: Make some better solution
+            let tabRep = TabRepresentation(id: newTab.id, index: newTabIndex)
+            newTab.tabRepresentation = tabRep
+            
+            self.state.tabManager.addTab(newTab)
+            
+            if let loc = self.parent?.location {
+                loc.appendTabRep(tabRep)
+            } else {
+                print("failed to get location")
+            }
+            
             Alto.shared.cookieManager.setupCookies(for: newWebView)
+            
+            self.state.tabManager.setActiveTab(newTab)
+            
+            return newWebView
         }
         return nil
     }
 }
+
+
+
+

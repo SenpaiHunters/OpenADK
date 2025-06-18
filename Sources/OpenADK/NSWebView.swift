@@ -6,9 +6,9 @@ import SwiftUI
 
 /// Allows the Appkit native WKWebView to be used in SwiftUI
 public struct NSWebView: NSViewRepresentable {
-    public var webView: (any webViewProtocol)
+    public var webView: (any webViewProtocol)?
     
-    public init(webView: any webViewProtocol) {
+    public init(webView: (any webViewProtocol)? = nil) {
         self.webView = webView
     }
     
@@ -18,12 +18,11 @@ public struct NSWebView: NSViewRepresentable {
         VisualEffect.state = .active
         VisualEffect.blendingMode = .behindWindow
         
-        if let concreteView = webView as? NSView {
+        if let concreteView = webView {
             return concreteView
         } else {
             return VisualEffect
         }
-        
     }
     
     public func updateNSView(_ nsView: NSViewType, context: Context) {
