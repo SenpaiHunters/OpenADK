@@ -2,7 +2,6 @@
 
 import WebKit
 
-
 /// A base configuration for `WKWebViewConfiguration` used for creating tabs.
 ///
 /// This is a modified version of Beam's implementation:
@@ -10,7 +9,7 @@ import WebKit
 public class AltoWebViewConfigurationBase: WKWebViewConfiguration {
     required init?(coder: NSCoder) { super.init(coder: coder) }
 
-    public override init() {
+    override public init() {
         super.init()
 
         preferences.javaScriptCanOpenWindowsAutomatically = true
@@ -18,6 +17,5 @@ public class AltoWebViewConfigurationBase: WKWebViewConfiguration {
         preferences.setValue(true, forKey: "developerExtrasEnabled")
         defaultWebpagePreferences.preferredContentMode = .desktop
         defaultWebpagePreferences.allowsContentJavaScript = true
-        
     }
 }

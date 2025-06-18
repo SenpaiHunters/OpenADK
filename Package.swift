@@ -15,9 +15,9 @@ let package = Package(
     ],
     targets: [
         .target(
-          name: "OpenADKObjC",
-          path: "Sources/OpenADKObjC",
-          publicHeadersPath: "."
+            name: "OpenADKObjC",
+            path: "Sources/OpenADKObjC",
+            publicHeadersPath: "."
         ),
         .target(
             name: "OpenADK",
@@ -27,6 +27,6 @@ let package = Package(
         .testTarget(
             name: "OpenADKTests",
             dependencies: ["OpenADK"]
-        )
+        ),
     ]
 )

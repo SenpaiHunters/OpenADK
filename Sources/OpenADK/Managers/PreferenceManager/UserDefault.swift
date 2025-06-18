@@ -1,9 +1,7 @@
 //
-import SwiftUI
-import Observation
 import Combine
-
-
+import Observation
+import SwiftUI
 
 /// This is used instead of @AppStorage as that clashes with @Observable and I want all of the vars in
 /// The PreferenceManager to be accessible without needing to list all vars in each view we have to change variables
@@ -13,10 +11,10 @@ struct UserDefault<Value> {
     let defaultValue: Value
     var container: UserDefaults = .standard
     private let publisher = PassthroughSubject<Value, Never>()
-    
+
     var wrappedValue: Value {
         get {
-            return container.object(forKey: key) as? Value ?? defaultValue
+            container.object(forKey: key) as? Value ?? defaultValue
         }
         set {
             // Check whether we're dealing with an optional and remove the object if the new value is nil.
@@ -30,7 +28,7 @@ struct UserDefault<Value> {
     }
 
     var projectedValue: AnyPublisher<Value, Never> {
-        return publisher.eraseToAnyPublisher()
+        publisher.eraseToAnyPublisher()
     }
 }
 
@@ -39,6 +37,7 @@ public protocol AnyOptional {
     /// Returns `true` if `nil`, otherwise `false`.
     var isNil: Bool { get }
 }
+
 extension Optional: AnyOptional {
     public var isNil: Bool { self == nil }
 }
