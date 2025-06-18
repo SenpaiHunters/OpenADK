@@ -1,6 +1,7 @@
 //
 
 import WebKit
+import OpenADKObjC
 
 /// A base configuration for `WKWebViewConfiguration` used for creating tabs.
 ///
@@ -15,6 +16,12 @@ public class AltoWebViewConfigurationBase: WKWebViewConfiguration {
         preferences.javaScriptCanOpenWindowsAutomatically = true
         preferences.isFraudulentWebsiteWarningEnabled = true
         preferences.setValue(true, forKey: "developerExtrasEnabled")
+        allowsAirPlayForMediaPlayback = true
+        preferences._setAllowsPicture(inPictureMediaPlayback: true)
+        preferences._setFullScreenEnabled(true)
+        preferences._setBackspaceKeyNavigationEnabled(false)
+
+        
         defaultWebpagePreferences.preferredContentMode = .desktop
         defaultWebpagePreferences.allowsContentJavaScript = true
     }

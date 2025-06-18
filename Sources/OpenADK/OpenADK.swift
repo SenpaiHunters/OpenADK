@@ -19,13 +19,15 @@ public class Alto {
 
     public let windowManager: WindowManager
     public let cookieManager: CookiesManager
+    public let faviconManager: FaviconManager
     public let contextManager: String?
     public let paswordManager: String? // ToDo
     public let downloadManager: String? // ToDo
     public let modelManager: String? // ToDo (This will be AI intigration for local and cloud based LLMs)
+    
     // public let searchManager: SearchManager
 
-    public let faviconHandler: FaviconHandler
+    
     private init() {
         configuration = nil
 
@@ -36,7 +38,7 @@ public class Alto {
         downloadManager = nil
         modelManager = nil
         // searchManager = SearchManager()
-        faviconHandler = FaviconHandler()
+        faviconManager = FaviconManager()
 
         if spaces.isEmpty {
             spaces.append(Space())

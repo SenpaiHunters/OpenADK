@@ -19,7 +19,6 @@ struct FaviconCacheEntry: Codable {
 
 @Observable
 public class FaviconManager {
-    public static let shared = FaviconManager()
 
     // MARK: - Properties
 
@@ -36,7 +35,7 @@ public class FaviconManager {
 
     // MARK: - Initialization
 
-    private init() {
+    public init() {
         // Create cache directory in app support
         let appSupport = FileManager.default.urls(
             for: .applicationSupportDirectory,

@@ -148,25 +148,66 @@ public class WebPage: NSObject, Identifiable, Displayable {
     }
 
     public func returnView() -> any View {
-        AnyView(NSWebView(webView: webView))
+        
+        if let webview = webView as? AltoWebView {
+            let contentview = NSViewContainerView(contentView: webview)
+            return WebViewContainer(contentView: contentview, topContentInset: CGFloat(0.0))
+        }
+        return Text("no")
     }
 }
 
 extension WebPage: WKNavigationDelegate, WKUIDelegate {
     public func webView(_ webView: WKWebView, didFinish _: WKNavigation!) {
-        title = webView.title ?? "Untitled"
-
+        self.title = webView.title ?? "test"
+        
+        if let host = webView.url?.host {
+            let faviconURL = "https://\(host)/favicon.ico"
+            Alto.shared.faviconManager.fetchFavicon(for: faviconURL) { image in
+                self.favicon = image
+            }
+        }
+        
         canGoBack = webView.canGoBack
         canGoForward = webView.canGoForward
 
-        favicon = Alto.shared.faviconHandler.getFavicon(webView)
+        let pipScript = """
+        (async () => {
+            const video = document.querySelector('video');
+            if (video) {
+                try {
+                    if (document.pictureInPictureElement) {
+                        await document.exitPictureInPicture();
+                    } else {
+                        await video.requestPictureInPicture();
+                    }
+                } catch (error) {
+                    console.error('PiP error:', error);
+                }
+            } else {
+                console.log('No video element found on the page.');
+            }
+        })();
+        """
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {}
+        
+        webView.evaluateJavaScript(pipScript) { result, error in
+            if let error = error {
+                print("JavaScript error: \(error)")
+            } else {
+                print("Picture-in-Picture script executed.")
+            }
+        }
+
+        
+        print(self.title)
     }
 
     public func webViewDidClose(_: WKWebView) {
         parent?.closeTab()
     }
+    
+    
 
     // This checks for new Window Requests from tabs
     public func webView(_: WKWebView,
@@ -216,4 +257,38 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
         }
         return nil
     }
+    
+    
+    
+    /*
+    public func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        let urlCredential = URLCredential(user: "email", password: "my pasword", persistence: .forSession)
+        completionHandler(.useCredential, urlCredential)
+        print(urlCredential)
+    }
+     */
 }
+
+
+/*
+class NavigationDelegate: NSObject, WKNavigationDelegate {
+    
+    func webView(WKWebView, didStartProvisionalNavigation: WKNavigation!) {
+        
+    }
+    
+    func webView(WKWebView, didCommit: WKNavigation!) {
+        
+    }
+    
+    func webView(WKWebView, didFinish: WKNavigation!) {
+        
+    }
+    
+    
+    func webView(WKWebView, didReceive: URLAuthenticationChallenge, completionHandler: (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        
+    }
+    
+}
+*/
