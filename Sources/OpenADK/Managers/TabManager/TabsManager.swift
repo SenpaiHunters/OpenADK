@@ -65,7 +65,7 @@ public class TabsManager: TabManagerProtocol {
             let request = URLRequest(url: url)
             newWebView.load(request)
         }
-        let newTab = Tab(state: state)
+        let newTab = GenaricTab(state: state)
         newTab.location = tabLocation
 
         let newWebPage = WebPage(webView: newWebView, state: state, parent: newTab)
@@ -82,15 +82,6 @@ public class TabsManager: TabManagerProtocol {
     }
 }
 
-public class SearchEngine {
-    var engineName: String
-    var searchURL: String
-
-    public init(_ name: String, url: String) {
-        engineName = name
-        searchURL = url
-    }
-}
 
 public protocol TabManagerProtocol {
     var state: (any StateProtocol)? { get set }

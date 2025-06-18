@@ -20,7 +20,7 @@ public protocol TabProtocol: NSObject, Identifiable {
 }
 
 @Observable
-public class Tab: NSObject, Identifiable, TabProtocol {
+open class GenaricTab: NSObject, Identifiable, TabProtocol {
     public let id = UUID()
 
     public var tabRepresentation: TabRepresentation?
@@ -80,6 +80,8 @@ public protocol Displayable {
     var isLoading: Bool { get set }
 
     func createNewTab(_ url: String, _ configuration: WKWebViewConfiguration, frame: CGRect)
+    func goBack()
+    func goForward()
 
     func removeWebView()
 
@@ -88,6 +90,7 @@ public protocol Displayable {
 
 @Observable
 public class WebPage: NSObject, Identifiable, Displayable {
+    
     public var parent: (any TabProtocol)?
 
     private var state: any StateProtocol
@@ -125,8 +128,18 @@ public class WebPage: NSObject, Identifiable, Displayable {
         webView.navigationDelegate = self
     }
 
-    public func createNewTab(_: String, _: WKWebViewConfiguration, frame _: CGRect) {}
-
+    public func createNewTab(_: String, _: WKWebViewConfiguration, frame _: CGRect) {
+        
+    }
+    
+    public func goBack() {
+        self.webView.goBack()
+    }
+    
+    public func goForward() {
+        self.webView.goForward()
+    }
+    
     // This will deinit the webview and remove it from its parent
     public func removeWebView() {
         webView.stopLoading()
@@ -178,7 +191,7 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
             }
 
             let newWebPage = WebPage(webView: newWebView, state: state)
-            let newTab = Tab(state: state)
+            let newTab = GenaricTab(state: state)
             newTab.location = parent?.location
             newTab.setContent(content: newWebPage)
             newWebPage.parent = newTab

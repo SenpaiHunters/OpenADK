@@ -23,7 +23,7 @@ public class Alto {
     public let paswordManager: String? // ToDo
     public let downloadManager: String? // ToDo
     public let modelManager: String? // ToDo (This will be AI intigration for local and cloud based LLMs)
-    public let searchManager: SearchManager
+    // public let searchManager: SearchManager
 
     public let faviconHandler: FaviconHandler
     private init() {
@@ -35,7 +35,7 @@ public class Alto {
         paswordManager = nil
         downloadManager = nil
         modelManager = nil
-        searchManager = SearchManager()
+        // searchManager = SearchManager()
         faviconHandler = FaviconHandler()
 
         if spaces.isEmpty {

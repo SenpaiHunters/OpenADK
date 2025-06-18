@@ -3,11 +3,11 @@ import Combine
 import Observation
 import WebKit
 
-/// AltoState handles the state for each window specificaly
+/// GenaricState handles the state for each window specificaly
 ///
 /// Allows each window to display a diferent view of the tabs
 @Observable
-public class AltoState: StateProtocol {
+open class GenaricState: StateProtocol {
     public var id: UUID = .init()
     public var tabManager: TabManagerProtocol = TabsManager()
     public var window: AltoWindow?
@@ -28,7 +28,8 @@ public class AltoState: StateProtocol {
     }
 }
 
-public protocol StateProtocol: ObservableObject {
+
+public protocol StateProtocol: Observable {
     var id: UUID { get }
     // var spaceIndex: Int { get set }
     var tabManager: TabManagerProtocol { get }

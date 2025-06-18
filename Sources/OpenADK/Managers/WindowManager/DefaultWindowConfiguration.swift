@@ -9,7 +9,7 @@ public struct DefaultWindowConfiguration {
 
     public var viewFactory: ((any StateProtocol) -> (NSView & BrowserView))?
 
-    public var stateFactory: () -> any StateProtocol = { AltoState() }
+    public var stateFactory: () -> any StateProtocol = { GenaricState() }
 
     public var windowRec: NSRect {
         NSRect(x: defaultPoint.x, y: defaultPoint.y, width: defaultSize.width, height: defaultSize.height)
@@ -53,7 +53,7 @@ public class HostingBrowserView<V: View>: NSHostingView<V>, BrowserView {
     }
 
     public required init(rootView: V) {
-        state = AltoState() // or some fallback/default state
+        state = GenaricState()
         super.init(rootView: rootView)
     }
 

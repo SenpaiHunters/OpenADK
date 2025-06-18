@@ -11,6 +11,11 @@ public struct TabRepresentation: Transferable, Codable, Comparable, Hashable, Id
     public var containerID: UUID? /// The drop zone: this could be a folder or a place like pinned tabs and favorites
     public var index: Int /// the tabs position in its containers list
 
+    public init(id: UUID, containerID: UUID? = nil, index: Int) {
+        self.id = id
+        self.containerID = containerID
+        self.index = index
+    }
     /// tells the struct it should be represented as the custom UTType .tabItem
     public static var transferRepresentation: some TransferRepresentation {
         CodableRepresentation(contentType: .tabItem)
