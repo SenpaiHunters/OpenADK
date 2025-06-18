@@ -8,7 +8,8 @@ public struct DefaultWindowConfiguration {
     public let defaultMinimumSize = CGSize(width: 500, height: 400)
     public let defaultSize = CGSize(width: 1024, height: 768)
     
-    public var browserView: (() -> NSView)?
+    public var browserView: (() -> (NSView & BrowserView))?
+    public var state: (any StateProtocol)?
     
     public var windowRec: NSRect {
         return NSRect(x: defaultPoint.x, y: defaultPoint.y, width: defaultSize.width, height: defaultSize.height)
@@ -25,22 +26,47 @@ public struct DefaultWindowConfiguration {
         return CGPoint(x: 0, y: 0)
     }
     
-    public init() {
+    public init(state: (any StateProtocol)? = nil) {
         
     }
     
-    /// Note: the functions must be marked with mutating in order to change the value of the struct
+    /// Note to devs: the functions must be marked with mutating in order to change the value of the struct
     
     /// Handles swiftUI Views
     public mutating func setView<V: View>(_ viewBuilder: @escaping (() -> V)) {
-            browserView = {
-                let nsView = NSHostingView(rootView: viewBuilder())
-                return nsView
-            }
+        let capturedState = self.state ?? AltoState()
+        browserView = {
+            HostingBrowserView(rootView: viewBuilder(), state: capturedState)
         }
+    }
+
 
     /// Handles AppKit Views
-    public mutating func setView(_ viewBuilder: @escaping () -> NSView ) {
+    public mutating func setView(_ viewBuilder: @escaping () -> (NSView & BrowserView)) {
         browserView = viewBuilder
     }
+
 }
+
+public class HostingBrowserView<V: View>: NSHostingView<V>, BrowserView {
+    public var state: any StateProtocol
+    
+    @MainActor @preconcurrency
+    public required init(rootView: V, state: any StateProtocol) {
+        self.state = state
+        super.init(rootView: rootView)
+    }
+
+    public required init(rootView: V) {
+        self.state = AltoState() // or some fallback/default state
+        super.init(rootView: rootView)
+    }
+    
+    @MainActor @preconcurrency
+    public required dynamic init?(coder aDecoder: NSCoder) {
+        // You could support decoding here if needed
+        // For now, safely fail
+        return nil
+    }
+}
+

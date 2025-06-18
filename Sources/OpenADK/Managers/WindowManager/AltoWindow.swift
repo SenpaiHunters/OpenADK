@@ -3,15 +3,23 @@ import AppKit
 
 
 public class AltoWindow: NSWindow {
-    private var state: AltoState
+    private var state: StateProtocol
     
-    init(contentRect: NSRect, content: () -> NSView, state: AltoState? = nil, title: String? = nil, isIncognito: Bool = false, minimumSize: CGSize? = nil) {
-        self.state = state ?? AltoState()
+    init(contentRect: NSRect, content: () -> (NSView & BrowserView), state: StateProtocol, title: String? = nil, isIncognito: Bool = false, minimumSize: CGSize? = nil) {
+        self.state = state
         
         super.init(contentRect: contentRect, styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                    backing: .buffered, defer: false)
         
         // more will go in this class but im in the middle of a rewrite
-        self.contentView = content()
+        
+        var contentView = content()
+        contentView.state = self.state
+        self.contentView = contentView
     }
+}
+
+
+public protocol BrowserView {
+    var state: StateProtocol { get set }
 }

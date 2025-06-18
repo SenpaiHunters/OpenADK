@@ -21,7 +21,7 @@ final public class CookiesManager: NSObject, WKHTTPCookieStoreObserver {
         cookieStorage = HTTPCookieStorage()
     }
 
-    func setupCookies(for webView: WKWebView) {
+    public func setupCookies(for webView: WKWebView) {
         let configuration = webView.configurationWithoutMakingCopy
         for cookie in cookieStorage.cookies ?? [] {
             configuration.websiteDataStore.httpCookieStore.setCookie(cookie)

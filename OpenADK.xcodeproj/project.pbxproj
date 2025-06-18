@@ -10,6 +10,7 @@
 		C449FA4A2DFFCFC400C05EF4 /* OpenADK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C449FA3E2DFFCFC400C05EF4 /* OpenADK.framework */; };
 		C4AFFE5C2E00B306001D60F8 /* OpenADKObjC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C4AFFE462E00AB1B001D60F8 /* OpenADKObjC.framework */; platformFilters = (macos, ); };
 		C4AFFE5D2E00B306001D60F8 /* OpenADKObjC.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C4AFFE462E00AB1B001D60F8 /* OpenADKObjC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C4BB720A2E023218003676F4 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = C4BB72092E023218003676F4 /* Algorithms */; };
 		C4D5A4D12DFFDCC900002E71 /* Package.swift in Resources */ = {isa = PBXBuildFile; fileRef = C4D5A4D02DFFDCC900002E71 /* Package.swift */; };
 /* End PBXBuildFile section */
 
@@ -49,6 +50,7 @@
 		C449FA492DFFCFC400C05EF4 /* OpenADKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenADKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C473AB652E0110DF00139C76 /* OpenADKObjectiveC.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OpenADKObjectiveC.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C4AFFE462E00AB1B001D60F8 /* OpenADKObjC.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OpenADKObjC.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C4BB72072E0231FC003676F4 /* swift-algorithms */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "swift-algorithms"; path = "/Users/hensonliga/Library/Developer/Xcode/DerivedData/BrowserDevelopment-bhtdjnkfgnastygpvyocwgwmfbas/SourcePackages/checkouts/swift-algorithms"; sourceTree = "<absolute>"; };
 		C4D5A4D02DFFDCC900002E71 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -114,6 +116,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C4BB720A2E023218003676F4 /* Algorithms in Frameworks */,
 				C4AFFE5C2E00B306001D60F8 /* OpenADKObjC.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -150,6 +153,7 @@
 				C4D5A4DA2DFFDF3D00002E71 /* Tests */,
 				C449FA3F2DFFCFC400C05EF4 /* Products */,
 				C4D5A4D02DFFDCC900002E71 /* Package.swift */,
+				C4BB72062E0231F7003676F4 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -162,6 +166,14 @@
 				C473AB652E0110DF00139C76 /* OpenADKObjectiveC.framework */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C4BB72062E0231F7003676F4 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				C4BB72072E0231FC003676F4 /* swift-algorithms */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -212,6 +224,7 @@
 			);
 			name = OpenADK;
 			packageProductDependencies = (
+				C4BB72092E023218003676F4 /* Algorithms */,
 			);
 			productName = OpenADK;
 			productReference = C449FA3E2DFFCFC400C05EF4 /* OpenADK.framework */;
@@ -310,6 +323,9 @@
 			);
 			mainGroup = C449FA342DFFCFC400C05EF4;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C4BB72082E023218003676F4 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C449FA3F2DFFCFC400C05EF4 /* Products */;
 			projectDirPath = "";
@@ -457,15 +473,12 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /Users/hensonliga/Development/AltoBrowser/OpenADK/Sources/OpenADKObjC;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SYSTEM_HEADER_SEARCH_PATHS = /Users/hensonliga/Development/AltoBrowser/OpenADK/Sources/OpenADKObjC;
-				USER_HEADER_SEARCH_PATHS = /Users/hensonliga/Development/AltoBrowser/OpenADK/Sources/OpenADKObjC;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 			};
@@ -519,13 +532,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /Users/hensonliga/Development/AltoBrowser/OpenADK/Sources/OpenADKObjC;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
-				SYSTEM_HEADER_SEARCH_PATHS = /Users/hensonliga/Development/AltoBrowser/OpenADK/Sources/OpenADKObjC;
-				USER_HEADER_SEARCH_PATHS = /Users/hensonliga/Development/AltoBrowser/OpenADK/Sources/OpenADKObjC;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 			};
@@ -848,6 +858,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C4BB72082E023218003676F4 /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-algorithms.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C4BB72092E023218003676F4 /* Algorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C4BB72082E023218003676F4 /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			productName = Algorithms;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C449FA352DFFCFC400C05EF4 /* Project object */;
 }

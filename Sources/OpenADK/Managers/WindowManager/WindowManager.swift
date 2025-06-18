@@ -5,8 +5,6 @@ import SwiftUI
 
 /// Handles creating Browser Windows
 final public class WindowManager {
-    // private let alto = Alto.shared
-    private var altoState: AltoState?
     
     public var configuration: DefaultWindowConfiguration
     
@@ -18,11 +16,18 @@ final public class WindowManager {
     
     /// Creates a window with designated content
     @discardableResult
-    public func createWindow(content: () -> NSView, frame: NSRect? = nil) -> AltoWindow? {
+    public func createWindow(content: () -> (NSView & BrowserView), frame: NSRect? = nil) -> AltoWindow? {
+        print("NEW NUGH UH")
+
+        guard let state = configuration.state else {
+            return nil
+        }
+        print("NEW WIDNOW")
         /// We still use AltoWindow rather than window because we still want to be able to keep track of it
         let window = AltoWindow(
             contentRect: frame ?? configuration.windowRec,
             content: content,
+            state: state,
             minimumSize: configuration.defaultMinimumSize
         )
         self.windows.append(window)
@@ -33,7 +38,7 @@ final public class WindowManager {
     
     /// Creates a browser window with tabs
     @discardableResult
-    public func createWindow(tabs: [AltoTab]) -> AltoWindow? {
+    public func createWindow(tabs: [any TabProtocol]) -> AltoWindow? {
         let browserView = configuration.browserView
         
         if let browserView {
