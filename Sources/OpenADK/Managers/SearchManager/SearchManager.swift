@@ -1,6 +1,6 @@
 import Foundation
 import Observation
-
+import SwiftUI
 
 
 // MARK: - SearchEngine
@@ -130,7 +130,7 @@ public class SearchManager {
     private let maxHistoryItems = 100
 
     /// Maximum number of suggestions to show
-    private let maxSuggestions = 10
+    private let maxSuggestions = 5
 
     /// UserDefaults key for search history
     private let historyKey = "SearchHistory"
@@ -255,7 +255,9 @@ public class SearchManager {
     /// Clears all search suggestions
     public func clearSuggestions() {
         suggestionTask?.cancel()
-        suggestions = []
+        withAnimation {
+            suggestions = []
+        }
     }
 
     /// Clears search history
@@ -282,24 +284,33 @@ public class SearchManager {
 
     /// Checks if a string is a valid URL
     public func isValidURL(_ string: String) -> Bool {
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Reject strings with spaces (except at start/end which we trim)
+        if trimmed.contains(" ") {
+            return false
+        }
+        
         // First check if it's already a complete URL
-        if let url = URL(string: string),
+        if let url = URL(string: trimmed),
            let scheme = url.scheme,
-           ["http", "https", "file", "ftp"].contains(scheme.lowercased()) {
+           ["http", "https", "file", "ftp"].contains(scheme.lowercased()),
+           let host = url.host,
+           !host.isEmpty {
             return true
         }
 
         // Check for common domain patterns without protocol
         let domainPatterns = [
-            #"^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(/.*)?$"#, // Standard domain
-            #"^localhost(:[0-9]+)?(/.*)?$"#, // Localhost
-            #"^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]+)?(/.*)?$"# // IP address
+            #"^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.([a-zA-Z]{2,}|[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(:[0-9]+)?(/[^\s]*)?$"#, // Standard domain with valid TLD
+            #"^localhost(:[0-9]+)?(/[^\s]*)?$"#, // Localhost
+            #"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:[0-9]+)?(/[^\s]*)?$"# // Valid IP address
         ]
 
         for pattern in domainPatterns {
-            let regex = try? NSRegularExpression(pattern: pattern)
-            let range = NSRange(string.startIndex ..< string.endIndex, in: string)
-            if regex?.firstMatch(in: string, options: [], range: range) != nil {
+            let regex = try? NSRegularExpression(pattern: pattern, options: [])
+            let range = NSRange(trimmed.startIndex ..< trimmed.endIndex, in: trimmed)
+            if regex?.firstMatch(in: trimmed, options: [], range: range) != nil {
                 return true
             }
         }
@@ -307,10 +318,8 @@ public class SearchManager {
         return false
     }
     
-    // MARK: - Private Methods
-
     /// Normalizes a URL by adding protocol if missing
-    private func normalizeURL(_ string: String) -> String {
+    public func normalizeURL(_ string: String) -> String {
         if string.hasPrefix("http://") || string.hasPrefix("https://") || string.hasPrefix("file://") {
             return string
         }
@@ -322,6 +331,8 @@ public class SearchManager {
 
         return string
     }
+    
+    // MARK: - Private Methods
 
     /// Adds a query to search history
     private func addToHistory(query: String) {
@@ -384,7 +395,9 @@ public class SearchManager {
                     }
                 }
 
-                self.suggestions = Array(uniqueSuggestions.prefix(maxSuggestions))
+                withAnimation {
+                    self.suggestions = Array(uniqueSuggestions.prefix(maxSuggestions))
+                }
             }
         } catch {
             // Silently fail - suggestions are optional
@@ -443,7 +456,7 @@ public class SearchManager {
         }
 
         return suggestions.prefix(5).map {
-            var isURL = isValidURL($0)
+            let isURL = isValidURL($0)
             return SearchSuggestion(text: $0, type: isURL ? .url : .query)
         }
     }
@@ -459,7 +472,7 @@ public class SearchManager {
 
         return json.compactMap { item in
             guard let phrase = item["phrase"] as? String else { return nil }
-            var isURL = isValidURL(phrase)
+            let isURL = isValidURL(phrase)
 
             return SearchSuggestion(text: phrase, type: isURL ? .url : .query)
         }.prefix(5).map(\.self)
@@ -479,7 +492,7 @@ public class SearchManager {
 
         return searchSuggestions.compactMap { item in
             guard let query = item["query"] as? String else { return nil }
-            var isURL = isValidURL(query)
+            let isURL = isValidURL(query)
 
             return SearchSuggestion(text: query, type: isURL ? .url : .query)
         }.prefix(5).map(\.self)
