@@ -41,10 +41,17 @@ public final class CookiesManager: NSObject, WKHTTPCookieStoreObserver {
     public func clearCookiesAndCache() {
         cookieStorage.cookies?.forEach(cookieStorage.deleteCookie)
 
-        WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), completionHandler: { records in
-            for record in records {
-                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
+        WKWebsiteDataStore.default().fetchDataRecords(
+            ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(),
+            completionHandler: { records in
+                for record in records {
+                    WKWebsiteDataStore.default().removeData(
+                        ofTypes: record.dataTypes,
+                        for: [record],
+                        completionHandler: {}
+                    )
+                }
             }
-        })
+        )
     }
 }

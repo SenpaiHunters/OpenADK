@@ -4,7 +4,6 @@ import SwiftUI
 
 // MARK: - PreferencesManager
 
-
 @Observable
 public final class PreferencesManager {
     public static let shared = PreferencesManager()

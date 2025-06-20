@@ -3,6 +3,8 @@ import AppKit
 import Observation
 import WebKit
 
+// MARK: - TabsManager
+
 /// Manges Tabs for each Window
 ///
 ///  Tabs will be stored in Alto in future in order to support tabs being shared between windows (like Arc)
@@ -11,7 +13,7 @@ public class TabsManager: TabManagerProtocol {
     public var state: (any StateProtocol)?
 
     public var globalLocations: [TabLocationProtocol] = [
-        TabLocation(name: "Favorites"),
+        TabLocation(name: "Favorites")
     ]
 
     public init(state: (any StateProtocol)? = nil) {
@@ -49,7 +51,12 @@ public class TabsManager: TabManagerProtocol {
         return allLocations.first(where: { $0.name == location })
     }
 
-    public func createNewTab(url: String = "https://www.google.com/", frame: CGRect = .zero, configuration: WKWebViewConfiguration = AltoWebViewConfigurationBase(), location: String = "unpinned") {
+    public func createNewTab(
+        url: String = "https://www.google.com/",
+        frame: CGRect = .zero,
+        configuration: WKWebViewConfiguration = AltoWebViewConfigurationBase(),
+        location: String = "unpinned"
+    ) {
         guard let state else {
             return
         }
@@ -82,6 +89,7 @@ public class TabsManager: TabManagerProtocol {
     }
 }
 
+// MARK: - TabManagerProtocol
 
 public protocol TabManagerProtocol {
     var state: (any StateProtocol)? { get set }

@@ -2,6 +2,8 @@
 import AppKit
 import Observation
 
+// MARK: - TabLocation
+
 @Observable
 public class TabLocation: TabLocationProtocol {
     public var name: String
@@ -22,6 +24,8 @@ public class TabLocation: TabLocationProtocol {
         tabs.removeAll(where: { $0.id == id })
     }
 }
+
+// MARK: - TabLocationProtocol
 
 public protocol TabLocationProtocol {
     var name: String { get set }

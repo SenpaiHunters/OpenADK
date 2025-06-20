@@ -3,6 +3,8 @@ import Combine
 import Observation
 import WebKit
 
+// MARK: - GenaricState
+
 /// GenaricState handles the state for each window specificaly
 ///
 /// Allows each window to display a diferent view of the tabs
@@ -28,6 +30,7 @@ open class GenaricState: StateProtocol {
     }
 }
 
+// MARK: - StateProtocol
 
 public protocol StateProtocol: Observable {
     var id: UUID { get }

@@ -4,6 +4,8 @@ import AppKit
 import SwiftUI
 import WebKit
 
+// MARK: - TabProtocol
+
 // for a tab to be rendered in the browser it must conform to the tab protocol
 // The Tab can be a note, a swiftView like a canvas or a webpage
 public protocol TabProtocol: NSObject, Identifiable {
@@ -18,6 +20,8 @@ public protocol TabProtocol: NSObject, Identifiable {
     func setContent(content addedContent: any Displayable)
     func closeTab()
 }
+
+// MARK: - GenaricTab
 
 @Observable
 open class GenaricTab: NSObject, Identifiable, TabProtocol {
@@ -44,7 +48,7 @@ open class GenaricTab: NSObject, Identifiable, TabProtocol {
     }
 
     public func setContent(content addedContent: any Displayable) {
-        if content.count > 0 {
+        if !content.isEmpty {
             content[0] = addedContent
         } else {
             content.append(addedContent)
@@ -67,6 +71,8 @@ open class GenaricTab: NSObject, Identifiable, TabProtocol {
     }
 }
 
+// MARK: - Displayable
+
 /// This can be the content inside a tab
 public protocol Displayable {
     var parent: (any TabProtocol)? { get set }
@@ -88,16 +94,17 @@ public protocol Displayable {
     func returnView() -> any View
 }
 
+// MARK: - WebPage
+
 @Observable
 public class WebPage: NSObject, Identifiable, Displayable {
-    
     public var parent: (any TabProtocol)?
 
     private var state: any StateProtocol
 
     public let id = UUID()
 
-    public var title: String = "Untitled"
+    public var title = "Untitled"
 
     public var webView: webViewProtocol
 
@@ -107,11 +114,11 @@ public class WebPage: NSObject, Identifiable, Displayable {
         webView
     }
 
-    public var canGoBack: Bool = false
+    public var canGoBack = false
 
-    public var canGoForward: Bool = false
+    public var canGoForward = false
 
-    public var isLoading: Bool = false
+    public var isLoading = false
 
     public var uiDelegate: WKUIDelegate?
     public var uiDownloadDelegate: WKDownloadDelegate?
@@ -128,18 +135,16 @@ public class WebPage: NSObject, Identifiable, Displayable {
         webView.navigationDelegate = self
     }
 
-    public func createNewTab(_: String, _: WKWebViewConfiguration, frame _: CGRect) {
-        
-    }
-    
+    public func createNewTab(_: String, _: WKWebViewConfiguration, frame _: CGRect) {}
+
     public func goBack() {
-        self.webView.goBack()
+        webView.goBack()
     }
-    
+
     public func goForward() {
-        self.webView.goForward()
+        webView.goForward()
     }
-    
+
     // This will deinit the webview and remove it from its parent
     public func removeWebView() {
         webView.stopLoading()
@@ -148,7 +153,6 @@ public class WebPage: NSObject, Identifiable, Displayable {
     }
 
     public func returnView() -> any View {
-        
         if let webview = webView as? AltoWebView {
             let contentview = NSViewContainerView(contentView: webview)
             return WebViewContainer(contentView: contentview, topContentInset: CGFloat(0.0))
@@ -157,64 +161,38 @@ public class WebPage: NSObject, Identifiable, Displayable {
     }
 }
 
+// MARK: WKNavigationDelegate, WKUIDelegate
+
 extension WebPage: WKNavigationDelegate, WKUIDelegate {
     public func webView(_ webView: WKWebView, didFinish _: WKNavigation!) {
-        self.title = webView.title ?? "test"
-        
-        if let host = webView.url?.host {
-            let faviconURL = "https://\(host)/favicon.ico"
-            Alto.shared.faviconManager.fetchFavicon(for: faviconURL) { image in
-                self.favicon = image
+        title = webView.title ?? "test"
+
+        // Instead of guessing the favicon URL, let's find the actual favicon from the HTML
+        if let url = webView.url {
+            Alto.shared.faviconManager.fetchFaviconFromHTML(webView: webView, baseURL: url) { [weak self] image in
+                DispatchQueue.main.async {
+                    self?.favicon = image
+                }
             }
         }
-        
+
         canGoBack = webView.canGoBack
         canGoForward = webView.canGoForward
 
-        let pipScript = """
-        (async () => {
-            const video = document.querySelector('video');
-            if (video) {
-                try {
-                    if (document.pictureInPictureElement) {
-                        await document.exitPictureInPicture();
-                    } else {
-                        await video.requestPictureInPicture();
-                    }
-                } catch (error) {
-                    console.error('PiP error:', error);
-                }
-            } else {
-                console.log('No video element found on the page.');
-            }
-        })();
-        """
-
-        
-        webView.evaluateJavaScript(pipScript) { result, error in
-            if let error = error {
-                print("JavaScript error: \(error)")
-            } else {
-                print("Picture-in-Picture script executed.")
-            }
-        }
-
-        
-        print(self.title)
+        print(title)
     }
 
     public func webViewDidClose(_: WKWebView) {
         parent?.closeTab()
     }
-    
-    
 
     // This checks for new Window Requests from tabs
-    public func webView(_: WKWebView,
-                        createWebViewWith configuration: WKWebViewConfiguration,
-                        for navigationAction: WKNavigationAction,
-                        windowFeatures _: WKWindowFeatures) -> WKWebView?
-    {
+    public func webView(
+        _: WKWebView,
+        createWebViewWith configuration: WKWebViewConfiguration,
+        for navigationAction: WKNavigationAction,
+        windowFeatures _: WKWindowFeatures
+    ) -> WKWebView? {
         // If targetFrame is nil, this means the navigation action is targeting a new frame
         // that doesn't exist (otherwise the frame wouldnt be nil) in the current web view.
         // This happens when the web content tries to open a new window or tab.
@@ -257,38 +235,34 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
         }
         return nil
     }
-    
-    
-    
-    /*
-    public func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        let urlCredential = URLCredential(user: "email", password: "my pasword", persistence: .forSession)
-        completionHandler(.useCredential, urlCredential)
-        print(urlCredential)
-    }
-     */
-}
 
+    /*
+     public func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+         let urlCredential = URLCredential(user: "email", password: "my pasword", persistence: .forSession)
+         completionHandler(.useCredential, urlCredential)
+         print(urlCredential)
+     }
+      */
+}
 
 /*
-class NavigationDelegate: NSObject, WKNavigationDelegate {
-    
-    func webView(WKWebView, didStartProvisionalNavigation: WKNavigation!) {
-        
-    }
-    
-    func webView(WKWebView, didCommit: WKNavigation!) {
-        
-    }
-    
-    func webView(WKWebView, didFinish: WKNavigation!) {
-        
-    }
-    
-    
-    func webView(WKWebView, didReceive: URLAuthenticationChallenge, completionHandler: (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        
-    }
-    
-}
-*/
+ class NavigationDelegate: NSObject, WKNavigationDelegate {
+
+     func webView(WKWebView, didStartProvisionalNavigation: WKNavigation!) {
+
+     }
+
+     func webView(WKWebView, didCommit: WKNavigation!) {
+
+     }
+
+     func webView(WKWebView, didFinish: WKNavigation!) {
+
+     }
+
+     func webView(WKWebView, didReceive: URLAuthenticationChallenge, completionHandler: (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+
+     }
+
+ }
+ */

@@ -5,6 +5,8 @@ import Observation
 import SwiftUI
 import UniformTypeIdentifiers
 
+// MARK: - TabRepresentation
+
 /// A structure to store the tab data for drag and drop
 public struct TabRepresentation: Transferable, Codable, Comparable, Hashable, Identifiable {
     public var id: UUID /// The ID of the tab being represented
@@ -16,6 +18,7 @@ public struct TabRepresentation: Transferable, Codable, Comparable, Hashable, Id
         self.containerID = containerID
         self.index = index
     }
+
     /// tells the struct it should be represented as the custom UTType .tabItem
     public static var transferRepresentation: some TransferRepresentation {
         CodableRepresentation(contentType: .tabItem)

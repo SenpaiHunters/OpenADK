@@ -2,6 +2,8 @@
 import AppKit
 import WebKit
 
+// MARK: - AltoWebView
+
 /// Custom verson of WKWebView to avoid needing an extra class for managment
 @Observable
 public class AltoWebView: WKWebView, webViewProtocol {
@@ -14,7 +16,8 @@ public class AltoWebView: WKWebView, webViewProtocol {
         super.init(frame: frame, configuration: configuration)
 
         allowsMagnification = true
-        customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+        customUserAgent =
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
     }
 
     @available(*, unavailable)

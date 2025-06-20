@@ -2,6 +2,8 @@
 import AppKit
 import SwiftUI
 
+// MARK: - DefaultWindowConfiguration
+
 /// Lets us set the default sizing and positioning of a window
 public struct DefaultWindowConfiguration {
     public let defaultMinimumSize = CGSize(width: 500, height: 400)
@@ -42,6 +44,8 @@ public struct DefaultWindowConfiguration {
         viewFactory = viewBuilder
     }
 }
+
+// MARK: - HostingBrowserView
 
 public class HostingBrowserView<V: View>: NSHostingView<V>, BrowserView {
     public var state: any StateProtocol

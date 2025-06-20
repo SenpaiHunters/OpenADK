@@ -2,6 +2,8 @@
 
 import Observation
 
+// MARK: - Space
+
 // A default space class for use in the browser
 @Observable
 public class Space: SpaceProtocol {
@@ -18,9 +20,11 @@ public class Space: SpaceProtocol {
 
     public var localLocations: [TabLocation] = [
         TabLocation(name: "pinned"),
-        TabLocation(name: "unpinned"),
+        TabLocation(name: "unpinned")
     ]
 }
+
+// MARK: - SpaceProtocol
 
 // If the user wants to add things to spaces they can use the tab protocol
 public protocol SpaceProtocol {
