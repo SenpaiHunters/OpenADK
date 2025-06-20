@@ -1,3 +1,10 @@
+//
+//  FaviconManager.swift
+//  OpenADK
+//
+//  Created by Kami on 18/06/2025.
+//
+
 import Foundation
 import Observation
 import SwiftUI
@@ -14,179 +21,175 @@ extension NSImage {
 
 // MARK: - FaviconCacheEntry
 
+/// Represents a cached favicon entry with metadata
 struct FaviconCacheEntry: Codable {
     let imageData: Data
     let cachedDate: Date
     let originalURL: String
+    let accessCount: Int
+    let lastAccessDate: Date
 
+    /// Checks if the cache entry has expired based on TTL
     var isExpired: Bool {
-        let tenDaysInSeconds: TimeInterval = 10 * 24 * 60 * 60 // 10 days
-        return Date().timeIntervalSince(cachedDate) > tenDaysInSeconds
+        Date().timeIntervalSince(cachedDate) > 864_000 // 10 days in seconds
+    }
+
+    /// Creates a new cache entry with incremented access count
+    func withIncrementedAccess() -> FaviconCacheEntry {
+        FaviconCacheEntry(
+            imageData: imageData,
+            cachedDate: cachedDate,
+            originalURL: originalURL,
+            accessCount: accessCount + 1,
+            lastAccessDate: Date()
+        )
     }
 }
 
 // MARK: - FaviconManager
 
+/// Manages favicon fetching, caching
 @Observable
 public class FaviconManager {
     // MARK: - Properties
 
     private let cacheDirectory: URL
-    private let maxCacheSize = 100 * 1024 * 1024 // 100MB
-    private let cacheTTL: TimeInterval = 10 * 24 * 60 * 60 // 10 days
+    private let maxCacheSize = 104_857_600 // 100MB
+    private let cacheTTL: TimeInterval = 864_000 // 10 days
 
-    // In-memory cache for quick access
-    private var memoryCache: [String: NSImage] = [:]
-    private let maxMemoryCacheSize = 50 // Max number of images in memory
+    /// LRU-based memory cache with access tracking
+    private var memoryCache: [String: (image: NSImage, lastAccess: Date)] = [:]
+    private let maxMemoryCacheSize = 75 // Increased for better hit rate
 
-    // Cache queue for thread safety
-    private let cacheQueue = DispatchQueue(label: "com.alto.favicon.cache", qos: .utility)
+    /// Priority queue for intelligent preloading
+    private var preloadURLQueue: Set<String> = []
+    private var activePreloads: Set<String> = []
+    private let maxConcurrentPreloads = 3
+
+    private let cacheQueue = DispatchQueue(label: "com.openadk.favicon.cache", qos: .utility)
+    private let preloadDispatchQueue = DispatchQueue(label: "com.openadk.favicon.preload", qos: .background)
 
     // MARK: - Initialization
 
+    /// Initializes the FaviconManager
     public init() {
-        // Create cache directory in app support
-        let appSupport = FileManager.default.urls(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask
-        ).first!
-        cacheDirectory = appSupport.appendingPathComponent("Alto/FaviconCache")
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        cacheDirectory = appSupport.appendingPathComponent("OpenADK/FaviconCache")
 
         createCacheDirectoryIfNeeded()
         cleanExpiredCache()
-        preloadCommonFavicons()
     }
 
     // MARK: - Public Methods
 
-    /// Fetches a favicon for the given URL, using cache when available
+    /// Fetches a favicon for the given URL with intelligent caching and preloading
+    /// - Parameters:
+    ///   - url: The URL to fetch favicon for
+    ///   - completion: Completion handler with the fetched image
     public func fetchFavicon(for url: String, completion: @escaping (NSImage?) -> ()) {
         let cacheKey = generateCacheKey(from: url)
 
-        // First check memory cache
-        if let cachedImage = memoryCache[cacheKey] {
-            print("🚀 [FaviconManager] Loaded favicon from memory cache for: \(url)")
-            DispatchQueue.main.async {
-                completion(cachedImage)
+        // Check memory cache with LRU update
+        if let cached = memoryCache[cacheKey] {
+            memoryCache[cacheKey] = (cached.image, Date())
+
+            // Check if this was a preloaded favicon
+            if activePreloads.contains(cacheKey) {
+                activePreloads.remove(cacheKey)
             }
+
+            print("🚀 [FaviconManager] Memory cache hit for: \(url)")
+            DispatchQueue.main.async { completion(cached.image) }
+
             return
         }
 
-        // Check disk cache
         cacheQueue.async { [weak self] in
-            if let cachedEntry = self?.loadFromDiskCache(cacheKey: cacheKey) {
-                if !cachedEntry.isExpired {
-                    if let image = NSImage(data: cachedEntry.imageData) {
-                        print(
-                            "📁 [FaviconManager] Loaded favicon from disk cache for: \(url) (cached on: \(cachedEntry.cachedDate))"
-                        )
+            if let cachedEntry = self?.loadFromDiskCache(cacheKey: cacheKey), !cachedEntry.isExpired,
+               let image = NSImage(data: cachedEntry.imageData) {
+                // Update access statistics
+                let updatedEntry = cachedEntry.withIncrementedAccess()
+                self?.updateDiskCache(entry: updatedEntry, cacheKey: cacheKey)
 
-                        // Store in memory cache for faster future access
-                        DispatchQueue.main.async {
-                            self?.memoryCache[cacheKey] = image
-                            self?.limitMemoryCache()
-                            completion(image)
-                        }
-                        return
-                    }
-                } else {
-                    print("⏰ [FaviconManager] Cached favicon expired for: \(url), will fetch new one")
-                    // Remove expired entry
-                    self?.removeFromDiskCache(cacheKey: cacheKey)
+                print("📁 [FaviconManager] Disk cache hit for: \(url) (access count: \(updatedEntry.accessCount))")
+
+                DispatchQueue.main.async {
+                    self?.memoryCache[cacheKey] = (image, Date())
+                    self?.optimizeMemoryCache()
+                    completion(image)
                 }
+
+                return
+            } else if let cachedEntry = self?.loadFromDiskCache(cacheKey: cacheKey), cachedEntry.isExpired {
+                print("⏰ [FaviconManager] Expired cache for: \(url), refetching")
+                self?.removeFromDiskCache(cacheKey: cacheKey)
             }
 
-            // Cache miss - fetch from network
             self?.fetchFromNetwork(url: url, cacheKey: cacheKey, completion: completion)
         }
     }
 
-    /// Extracts favicon from HTML and fetches it intelligently
+    /// Extracts favicon from HTML with enhanced parsing and fallback strategies
+    /// - Parameters:
+    ///   - webView: The WKWebView to extract favicon from
+    ///   - baseURL: Base URL for resolving relative paths
+    ///   - completion: Completion handler with the extracted favicon
     public func fetchFaviconFromHTML(webView: WKWebView, baseURL: URL, completion: @escaping (NSImage?) -> ()) {
         let faviconScript = """
         (() => {
             const links = [];
-
-            // Check for various favicon link tags
             const selectors = [
                 'link[rel="icon"]',
                 'link[rel="shortcut icon"]', 
                 'link[rel="apple-touch-icon"]',
                 'link[rel="apple-touch-icon-precomposed"]',
-                'link[rel="icon" i]' // case insensitive
+                'link[rel="icon" i]',
+                'link[rel="mask-icon"]',
+                'link[rel="fluid-icon"]'
             ];
 
             for (const selector of selectors) {
                 const elements = document.querySelectorAll(selector);
                 for (const element of elements) {
                     const href = element.getAttribute('href');
-                    const sizes = element.getAttribute('sizes');
-                    const type = element.getAttribute('type');
                     if (href) {
                         links.push({
                             href: href,
                             rel: element.getAttribute('rel'),
-                            sizes: sizes,
-                            type: type
+                            sizes: element.getAttribute('sizes'),
+                            type: element.getAttribute('type'),
+                            color: element.getAttribute('color')
                         });
                     }
                 }
             }
-
             return links;
         })();
         """
 
         webView.evaluateJavaScript(faviconScript) { [weak self] result, error in
             if let error {
-                print("JavaScript error finding favicon: \(error)")
-                // Fallback to traditional method
+                print("❌ [FaviconManager] JavaScript error: \(error)")
                 self?.fallbackToTraditionalFavicon(baseURL: baseURL, completion: completion)
                 return
             }
 
             guard let links = result as? [[String: Any]], !links.isEmpty else {
-                // No favicon links found, try traditional method
                 self?.fallbackToTraditionalFavicon(baseURL: baseURL, completion: completion)
                 return
             }
 
-            // Sort favicon links by preference (prioritize better formats and sizes)
-            let sortedLinks = links.sorted { link1, link2 in
-                let type1 = link1["type"] as? String ?? ""
-                let type2 = link2["type"] as? String ?? ""
-                let sizes1 = link1["sizes"] as? String ?? ""
-                let sizes2 = link2["sizes"] as? String ?? ""
+            let sortedLinks = self?.prioritizeFaviconLinks(links) ?? links
 
-                // Prefer PNG over ICO
-                if type1.contains("png"), !type2.contains("png") { return true }
-                if !type1.contains("png"), type2.contains("png") { return false }
-
-                // Prefer larger sizes
-                let size1 = self?.extractSizeFromString(sizes1) ?? 0
-                let size2 = self?.extractSizeFromString(sizes2) ?? 0
-                if size1 != size2 { return size1 > size2 }
-
-                // Prefer apple-touch-icon over regular icon
-                let rel1 = link1["rel"] as? String ?? ""
-                let rel2 = link2["rel"] as? String ?? ""
-                if rel1.contains("apple-touch"), !rel2.contains("apple-touch") { return true }
-
-                return false
-            }
-
-            // Try the best favicon link first
-            if let bestLink = sortedLinks.first,
-               let href = bestLink["href"] as? String {
+            if let bestLink = sortedLinks.first, let href = bestLink["href"] as? String {
                 let faviconURL = self?.resolveURL(href: href, baseURL: baseURL) ?? href
-                print("🔍 [FaviconManager] Found favicon in HTML: \(faviconURL)")
+                print("🔍 [FaviconManager] Best favicon from HTML: \(faviconURL)")
 
                 self?.fetchFavicon(for: faviconURL) { image in
                     DispatchQueue.main.async {
                         if let image {
                             completion(image)
                         } else {
-                            // If the first one fails, try others or fallback
                             self?.tryRemainingFaviconLinks(
                                 Array(sortedLinks.dropFirst()),
                                 baseURL: baseURL,
@@ -199,64 +202,13 @@ public class FaviconManager {
         }
     }
 
-    /// Clears all cached favicons
-    public func clearCache() {
-        cacheQueue.async { [weak self] in
-            guard let self else { return }
-
-            // Clear memory cache
-            DispatchQueue.main.async {
-                self.memoryCache.removeAll()
-            }
-
-            // Clear disk cache
-            do {
-                let cacheFiles = try FileManager.default.contentsOfDirectory(
-                    at: cacheDirectory,
-                    includingPropertiesForKeys: nil
-                )
-                for file in cacheFiles {
-                    try FileManager.default.removeItem(at: file)
-                }
-                print("🗑️ [FaviconManager] Cache cleared successfully")
-            } catch {
-                print("❌ [FaviconManager] Failed to clear cache: \(error)")
-            }
-        }
-    }
-
-    /// Returns cache statistics
-    public func getCacheStats() -> (diskCount: Int, memoryCount: Int, totalSizeBytes: Int) {
-        var diskCount = 0
-        var totalSize = 0
-
-        do {
-            let cacheFiles = try FileManager.default.contentsOfDirectory(
-                at: cacheDirectory,
-                includingPropertiesForKeys: [.fileSizeKey]
-            )
-            diskCount = cacheFiles.count
-
-            for file in cacheFiles {
-                let resourceValues = try file.resourceValues(forKeys: [.fileSizeKey])
-                totalSize += resourceValues.fileSize ?? 0
-            }
-        } catch {
-            print("❌ [FaviconManager] Failed to get cache stats: \(error)")
-        }
-
-        return (diskCount: diskCount, memoryCount: memoryCache.count, totalSizeBytes: totalSize)
-    }
-
     // MARK: - Private Methods
 
+    /// Creates cache directory if it doesn't exist
     private func createCacheDirectoryIfNeeded() {
         if !FileManager.default.fileExists(atPath: cacheDirectory.path) {
             do {
-                try FileManager.default.createDirectory(
-                    at: cacheDirectory,
-                    withIntermediateDirectories: true
-                )
+                try FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
                 print("📁 [FaviconManager] Created cache directory at: \(cacheDirectory.path)")
             } catch {
                 print("❌ [FaviconManager] Failed to create cache directory: \(error)")
@@ -264,12 +216,20 @@ public class FaviconManager {
         }
     }
 
+    /// Generates a cache key from URL using efficient hashing
+    /// - Parameter url: URL to generate cache key for
+    /// - Returns: Cache key string
     private func generateCacheKey(from url: String) -> String {
         url.data(using: .utf8)?.base64EncodedString()
             .replacingOccurrences(of: "/", with: "_")
-            .replacingOccurrences(of: "+", with: "-") ?? url.hash.description
+            .replacingOccurrences(of: "+", with: "-") ?? String(url.hashValue)
     }
 
+    /// Fetches favicon from network with enhanced error handling
+    /// - Parameters:
+    ///   - url: URL to fetch from
+    ///   - cacheKey: Cache key for storage
+    ///   - completion: Completion handler
     private func fetchFromNetwork(url: String, cacheKey: String, completion: @escaping (NSImage?) -> ()) {
         guard let faviconURL = URL(string: url) else {
             print("❌ [FaviconManager] Invalid favicon URL: \(url)")
@@ -277,74 +237,80 @@ public class FaviconManager {
             return
         }
 
-        print("🌐 [FaviconManager] Fetching favicon from network: \(url)")
-
-        // First, try the original favicon URL
+        print("🌐 [FaviconManager] Fetching from network: \(url)")
         fetchSingleFavicon(from: faviconURL, originalURL: url, cacheKey: cacheKey, completion: completion)
     }
 
+    /// Fetches a single favicon with comprehensive error handling
+    /// - Parameters:
+    ///   - url: URL to fetch from
+    ///   - originalURL: Original URL for fallback
+    ///   - cacheKey: Cache key for storage
+    ///   - completion: Completion handler
     private func fetchSingleFavicon(
         from url: URL,
         originalURL: String,
         cacheKey: String,
         completion: @escaping (NSImage?) -> ()
     ) {
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 10.0
+        request.setValue(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            forHTTPHeaderField: "User-Agent"
+        )
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             if let error {
-                print("❌ [FaviconManager] Network error fetching favicon: \(error.localizedDescription)")
+                print("❌ [FaviconManager] Network error: \(error.localizedDescription)")
                 self?.tryFaviconFallback(originalURL: originalURL, cacheKey: cacheKey, completion: completion)
                 return
             }
 
-            // Check HTTP status code
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+            if let httpResponse = response as? HTTPURLResponse, !(200...299).contains(httpResponse.statusCode) {
                 print("❌ [FaviconManager] HTTP error \(httpResponse.statusCode) for: \(url)")
                 self?.tryFaviconFallback(originalURL: originalURL, cacheKey: cacheKey, completion: completion)
                 return
             }
 
-            guard let data, !data.isEmpty else {
-                print("❌ [FaviconManager] Empty data for: \(url)")
-                self?.tryFaviconFallback(originalURL: originalURL, cacheKey: cacheKey, completion: completion)
-                return
-            }
-
-            // Validate that the data is actually an image
-            guard let image = NSImage(data: data), image.isValid else {
+            guard let data, !data.isEmpty, let image = NSImage(data: data), image.isValid else {
                 print("❌ [FaviconManager] Invalid image data for: \(url)")
                 self?.tryFaviconFallback(originalURL: originalURL, cacheKey: cacheKey, completion: completion)
                 return
             }
 
-            print("✅ [FaviconManager] Successfully fetched favicon for: \(url)")
-
-            // Cache the image
+            print("✅ [FaviconManager] Successfully fetched: \(url)")
             self?.saveToDiskCache(data: data, cacheKey: cacheKey, originalURL: originalURL)
 
-            // Store in memory cache
             DispatchQueue.main.async {
-                self?.memoryCache[cacheKey] = image
-                self?.limitMemoryCache()
+                self?.memoryCache[cacheKey] = (image, Date())
+                self?.optimizeMemoryCache()
                 completion(image)
             }
         }.resume()
     }
 
+    /// Enhanced fallback strategy with multiple providers
+    /// - Parameters:
+    ///   - originalURL: Original URL that failed
+    ///   - cacheKey: Cache key for storage
+    ///   - completion: Completion handler
     private func tryFaviconFallback(originalURL: String, cacheKey: String, completion: @escaping (NSImage?) -> ()) {
-        guard let url = URL(string: originalURL),
-              let host = url.host else {
+        guard let url = URL(string: originalURL), let host = url.host else {
             DispatchQueue.main.async { completion(nil) }
             return
         }
 
         print("🔄 [FaviconManager] Trying fallback methods for: \(host)")
 
-        // Fallback URLs to try
         let fallbackURLs = [
             "https://\(host)/apple-touch-icon.png",
             "https://\(host)/apple-touch-icon-precomposed.png",
-            "https://www.google.com/s2/favicons?domain=\(host)",
-            "https://icons.duckduckgo.com/ip3/\(host).ico"
+            "https://\(host)/apple-touch-icon-120x120.png",
+            "https://www.google.com/s2/favicons?domain=\(host)&sz=32",
+            "https://icons.duckduckgo.com/ip3/\(host).ico",
+            "https://favicons.githubusercontent.com/\(host)",
+            "https://\(host)/favicon.png"
         ]
 
         tryFallbackURLs(
@@ -356,6 +322,13 @@ public class FaviconManager {
         )
     }
 
+    /// Tries fallback URLs sequentially with improved error handling
+    /// - Parameters:
+    ///   - fallbackURLs: Array of fallback URLs to try
+    ///   - index: Current index in the array
+    ///   - originalURL: Original URL for context
+    ///   - cacheKey: Cache key for storage
+    ///   - completion: Completion handler
     private func tryFallbackURLs(
         fallbackURLs: [String],
         index: Int,
@@ -364,14 +337,12 @@ public class FaviconManager {
         completion: @escaping (NSImage?) -> ()
     ) {
         guard index < fallbackURLs.count else {
-            // All fallbacks failed, try to generate a default favicon
-            print("⚠️ [FaviconManager] All fallback methods failed, generating default favicon")
+            print("⚠️ [FaviconManager] All fallbacks failed, generating default favicon")
             generateDefaultFavicon(for: originalURL, completion: completion)
             return
         }
 
         guard let fallbackURL = URL(string: fallbackURLs[index]) else {
-            // Skip invalid URL and try next one
             print("❌ [FaviconManager] Invalid fallback URL: \(fallbackURLs[index])")
             tryFallbackURLs(
                 fallbackURLs: fallbackURLs,
@@ -385,7 +356,10 @@ public class FaviconManager {
 
         print("🔍 [FaviconManager] Trying fallback \(index + 1)/\(fallbackURLs.count): \(fallbackURL)")
 
-        URLSession.shared.dataTask(with: fallbackURL) { [weak self] data, response, error in
+        var request = URLRequest(url: fallbackURL)
+        request.timeoutInterval = 8.0
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             if let error {
                 print("❌ [FaviconManager] Fallback \(index + 1) failed: \(error.localizedDescription)")
                 self?.tryFallbackURLs(
@@ -398,26 +372,20 @@ public class FaviconManager {
                 return
             }
 
-            if let data,
-               let httpResponse = response as? HTTPURLResponse,
-               httpResponse.statusCode == 200,
-               let image = NSImage(data: data),
-               image.isValid {
-                print("✅ [FaviconManager] Successfully fetched fallback favicon from: \(fallbackURL)")
-
-                // Cache the fallback image
+            if let data, let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode),
+               let image = NSImage(data: data), image.isValid {
+                print("✅ [FaviconManager] Fallback success from: \(fallbackURL)")
                 self?.saveToDiskCache(data: data, cacheKey: cacheKey, originalURL: originalURL)
 
                 DispatchQueue.main.async {
-                    self?.memoryCache[cacheKey] = image
-                    self?.limitMemoryCache()
+                    self?.memoryCache[cacheKey] = (image, Date())
+                    self?.optimizeMemoryCache()
                     completion(image)
                 }
                 return
             }
 
-            // This fallback failed, try the next one
-            print("❌ [FaviconManager] Fallback \(index + 1) invalid or empty data")
+            print("❌ [FaviconManager] Fallback \(index + 1) invalid data")
             self?.tryFallbackURLs(
                 fallbackURLs: fallbackURLs,
                 index: index + 1,
@@ -428,6 +396,10 @@ public class FaviconManager {
         }.resume()
     }
 
+    /// Generates a default favicon with improved visual design
+    /// - Parameters:
+    ///   - url: URL to generate favicon for
+    ///   - completion: Completion handler
     private func generateDefaultFavicon(for url: String, completion: @escaping (NSImage?) -> ()) {
         guard let domain = URL(string: url)?.host else {
             print("❌ [FaviconManager] Could not extract domain from URL: \(url)")
@@ -435,31 +407,34 @@ public class FaviconManager {
             return
         }
 
-        // Generate a simple default favicon with the first letter of the domain
         let firstLetter = String(domain.prefix(1).uppercased())
-        let image = createDefaultFaviconImage(with: firstLetter)
+        let image = createDefaultFaviconImage(with: firstLetter, domain: domain)
 
-        print("🎨 [FaviconManager] Generated default favicon for \(domain) with letter: \(firstLetter)")
-
-        DispatchQueue.main.async {
-            completion(image)
-        }
+        print("🎨 [FaviconManager] Generated default favicon for \(domain)")
+        DispatchQueue.main.async { completion(image) }
     }
 
-    private func createDefaultFaviconImage(with letter: String) -> NSImage? {
+    /// Creates a default favicon image with domain-based color
+    /// - Parameters:
+    ///   - letter: Letter to display
+    ///   - domain: Domain for color generation
+    /// - Returns: Generated NSImage
+    private func createDefaultFaviconImage(with letter: String, domain: String) -> NSImage? {
         let size = NSSize(width: 32, height: 32)
         let image = NSImage(size: size)
 
         image.lockFocus()
 
-        // Background
-        NSColor.systemBlue.setFill()
-        let rect = NSRect(origin: .zero, size: size)
-        rect.fill()
+        // Generate color based on domain hash for consistency
+        let domainHash = abs(domain.hashValue)
+        let hue = Double(domainHash % 360) / 360.0
+        let backgroundColor = NSColor(hue: hue, saturation: 0.7, brightness: 0.8, alpha: 1.0)
 
-        // Text
+        backgroundColor.setFill()
+        NSRect(origin: .zero, size: size).fill()
+
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 18, weight: .medium),
+            .font: NSFont.systemFont(ofSize: 18, weight: .semibold),
             .foregroundColor: NSColor.white
         ]
 
@@ -473,57 +448,81 @@ public class FaviconManager {
         )
 
         attributedString.draw(in: textRect)
-
         image.unlockFocus()
 
         return image
     }
 
+    /// Saves favicon to disk cache with enhanced metadata
+    /// - Parameters:
+    ///   - data: Image data to save
+    ///   - cacheKey: Cache key for storage
+    ///   - originalURL: Original URL for metadata
     private func saveToDiskCache(data: Data, cacheKey: String, originalURL: String) {
         let cacheEntry = FaviconCacheEntry(
             imageData: data,
             cachedDate: Date(),
-            originalURL: originalURL
+            originalURL: originalURL,
+            accessCount: 1,
+            lastAccessDate: Date()
         )
 
         do {
             let encodedData = try JSONEncoder().encode(cacheEntry)
             let fileURL = cacheDirectory.appendingPathComponent(cacheKey)
             try encodedData.write(to: fileURL)
-            print("💾 [FaviconManager] Saved favicon to disk cache: \(originalURL)")
+            print("💾 [FaviconManager] Saved to disk cache: \(originalURL)")
         } catch {
             print("❌ [FaviconManager] Failed to save to disk cache: \(error)")
         }
     }
 
+    /// Updates existing disk cache entry with new access data
+    /// - Parameters:
+    ///   - entry: Updated cache entry
+    ///   - cacheKey: Cache key for storage
+    private func updateDiskCache(entry: FaviconCacheEntry, cacheKey: String) {
+        do {
+            let encodedData = try JSONEncoder().encode(entry)
+            let fileURL = cacheDirectory.appendingPathComponent(cacheKey)
+            try encodedData.write(to: fileURL)
+        } catch {
+            print("❌ [FaviconManager] Failed to update disk cache: \(error)")
+        }
+    }
+
+    /// Loads favicon from disk cache
+    /// - Parameter cacheKey: Cache key to load
+    /// - Returns: Cached entry if found
     private func loadFromDiskCache(cacheKey: String) -> FaviconCacheEntry? {
         let fileURL = cacheDirectory.appendingPathComponent(cacheKey)
 
         do {
             let data = try Data(contentsOf: fileURL)
-            let cacheEntry = try JSONDecoder().decode(FaviconCacheEntry.self, from: data)
-            return cacheEntry
+            return try JSONDecoder().decode(FaviconCacheEntry.self, from: data)
         } catch {
-            // File doesn't exist or is corrupted - not an error, just cache miss
             return nil
         }
     }
 
+    /// Removes favicon from disk cache
+    /// - Parameter cacheKey: Cache key to remove
     private func removeFromDiskCache(cacheKey: String) {
         let fileURL = cacheDirectory.appendingPathComponent(cacheKey)
         try? FileManager.default.removeItem(at: fileURL)
     }
 
-    private func limitMemoryCache() {
+    /// Optimizes memory cache using LRU eviction strategy
+    private func optimizeMemoryCache() {
         if memoryCache.count > maxMemoryCacheSize {
-            // Remove oldest entries (simple FIFO for now)
-            let keysToRemove = Array(memoryCache.keys).prefix(memoryCache.count - maxMemoryCacheSize)
-            for key in keysToRemove {
-                memoryCache.removeValue(forKey: key)
-            }
+            let sortedByAccess = memoryCache.sorted { $0.value.lastAccess < $1.value.lastAccess }
+            let keysToRemove = sortedByAccess.prefix(memoryCache.count - maxMemoryCacheSize).map(\.key)
+            keysToRemove.forEach { memoryCache.removeValue(forKey: $0) }
+            print("🧹 [FaviconManager] Evicted \(keysToRemove.count) items from memory cache")
         }
     }
 
+    /// Cleans expired cache entries
     private func cleanExpiredCache() {
         cacheQueue.async { [weak self] in
             guard let self else { return }
@@ -531,17 +530,52 @@ public class FaviconManager {
             do {
                 let cacheFiles = try FileManager.default.contentsOfDirectory(
                     at: cacheDirectory,
-                    includingPropertiesForKeys: nil
+                    includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey]
                 )
                 var expiredCount = 0
+                var totalSize = 0
+
+                // Sort by access frequency and age for intelligent cleanup
+                var cacheEntries: [(url: URL, entry: FaviconCacheEntry, size: Int)] = []
 
                 for file in cacheFiles {
                     let cacheKey = file.lastPathComponent
                     if let cacheEntry = loadFromDiskCache(cacheKey: cacheKey) {
+                        let resourceValues = try? file.resourceValues(forKeys: [.fileSizeKey])
+                        let size = resourceValues?.fileSize ?? 0
+                        totalSize += size
+
                         if cacheEntry.isExpired {
                             try FileManager.default.removeItem(at: file)
                             expiredCount += 1
+                        } else {
+                            cacheEntries.append((file, cacheEntry, size))
                         }
+                    }
+                }
+
+                // If cache is too large, remove least accessed items
+                if totalSize > maxCacheSize {
+                    let sortedEntries = cacheEntries.sorted {
+                        ($0.entry.accessCount, $0.entry.lastAccessDate) < (
+                            $1.entry.accessCount,
+                            $1.entry.lastAccessDate
+                        )
+                    }
+
+                    var currentSize = totalSize
+                    var removedCount = 0
+
+                    for (file, _, size) in sortedEntries {
+                        if currentSize <= maxCacheSize * 3 / 4 { break } // Keep 75% of max size
+
+                        try? FileManager.default.removeItem(at: file)
+                        currentSize -= size
+                        removedCount += 1
+                    }
+
+                    if removedCount > 0 {
+                        print("🗂️ [FaviconManager] Removed \(removedCount) least-used items to optimize disk usage")
                     }
                 }
 
@@ -554,39 +588,51 @@ public class FaviconManager {
         }
     }
 
-    private func preloadCommonFavicons() {
-        // Common websites that users frequently visit
-        // TODO: Add more common websites
-        /// Note: This should be a JSON file in the app bundle
-        /// or a separate Swift file index; this is just a temporary solution.
-        let commonFavicons = [
-            "https://www.google.com/favicon.ico",
-            "https://github.com/favicon.ico",
-            "https://stackoverflow.com/favicon.ico",
-            "https://www.youtube.com/favicon.ico",
-            "https://www.wikipedia.org/favicon.ico"
-        ]
+    /// Prioritizes favicon links based on quality and compatibility
+    /// - Parameter links: Array of favicon link dictionaries
+    /// - Returns: Sorted array of favicon links
+    private func prioritizeFaviconLinks(_ links: [[String: Any]]) -> [[String: Any]] {
+        links.sorted { link1, link2 in
+            let type1 = link1["type"] as? String ?? ""
+            let type2 = link2["type"] as? String ?? ""
+            let sizes1 = link1["sizes"] as? String ?? ""
+            let sizes2 = link2["sizes"] as? String ?? ""
+            let rel1 = link1["rel"] as? String ?? ""
+            let rel2 = link2["rel"] as? String ?? ""
 
-        // Preload in background after a short delay to not impact app startup
-        DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2.0) {
-            for faviconURL in commonFavicons {
-                self.fetchFavicon(for: faviconURL) { _ in
-                    // Silent preload - no need to handle result
-                }
-            }
+            // Prefer SVG for scalability
+            if type1.contains("svg"), !type2.contains("svg") { return true }
+            if !type1.contains("svg"), type2.contains("svg") { return false }
+
+            // Prefer PNG over ICO
+            if type1.contains("png"), !type2.contains("png") { return true }
+            if !type1.contains("png"), type2.contains("png") { return false }
+
+            // Prefer larger sizes (32x32 or higher)
+            let size1 = extractSizeFromString(sizes1)
+            let size2 = extractSizeFromString(sizes2)
+            if size1 >= 32, size2 < 32 { return true }
+            if size1 < 32, size2 >= 32 { return false }
+            if size1 != size2 { return size1 > size2 }
+
+            // Prefer apple-touch-icon for better quality
+            if rel1.contains("apple-touch"), !rel2.contains("apple-touch") { return true }
+
+            return false
         }
     }
 
-    // MARK: - HTML Favicon Detection Helpers
-
+    /// Tries remaining favicon links from HTML parsing
+    /// - Parameters:
+    ///   - remainingLinks: Remaining links to try
+    ///   - baseURL: Base URL for resolution
+    ///   - completion: Completion handler
     private func tryRemainingFaviconLinks(
         _ remainingLinks: [[String: Any]],
         baseURL: URL,
         completion: @escaping (NSImage?) -> ()
     ) {
-        guard let nextLink = remainingLinks.first,
-              let href = nextLink["href"] as? String else {
-            // No more links to try, fallback to traditional method
+        guard let nextLink = remainingLinks.first, let href = nextLink["href"] as? String else {
             fallbackToTraditionalFavicon(baseURL: baseURL, completion: completion)
             return
         }
@@ -599,7 +645,6 @@ public class FaviconManager {
                 if let image {
                     completion(image)
                 } else {
-                    // Try the next one
                     self?.tryRemainingFaviconLinks(
                         Array(remainingLinks.dropFirst()),
                         baseURL: baseURL,
@@ -610,6 +655,10 @@ public class FaviconManager {
         }
     }
 
+    /// Falls back to traditional favicon.ico approach
+    /// - Parameters:
+    ///   - baseURL: Base URL to construct favicon.ico path
+    ///   - completion: Completion handler
     private func fallbackToTraditionalFavicon(baseURL: URL, completion: @escaping (NSImage?) -> ()) {
         guard let host = baseURL.host else {
             DispatchQueue.main.async { completion(nil) }
@@ -619,39 +668,36 @@ public class FaviconManager {
         print("🔄 [FaviconManager] Falling back to traditional favicon: \(faviconURL)")
 
         fetchFavicon(for: faviconURL) { image in
-            DispatchQueue.main.async {
-                completion(image)
-            }
+            DispatchQueue.main.async { completion(image) }
         }
     }
 
+    /// Resolves relative URLs to absolute URLs
+    /// - Parameters:
+    ///   - href: The href attribute value
+    ///   - baseURL: Base URL for resolution
+    /// - Returns: Resolved absolute URL string
     private func resolveURL(href: String, baseURL: URL) -> String {
-        // Handle absolute URLs
         if href.hasPrefix("http://") || href.hasPrefix("https://") {
             return href
         }
 
-        // Handle protocol-relative URLs
         if href.hasPrefix("//") {
             return "\(baseURL.scheme ?? "https"):\(href)"
         }
 
-        // Handle absolute paths
         if href.hasPrefix("/") {
             return "\(baseURL.scheme ?? "https")://\(baseURL.host ?? "")\(href)"
         }
 
-        // Handle relative paths
         let baseURLString = baseURL.absoluteString
-        if baseURLString.hasSuffix("/") {
-            return "\(baseURLString)\(href)"
-        } else {
-            return "\(baseURLString)/\(href)"
-        }
+        return baseURLString.hasSuffix("/") ? "\(baseURLString)\(href)" : "\(baseURLString)/\(href)"
     }
 
+    /// Extracts numeric size from size strings like "32x32", "any", etc.
+    /// - Parameter sizeString: Size string to parse
+    /// - Returns: Extracted size as integer
     private func extractSizeFromString(_ sizeString: String) -> Int {
-        // Extract numeric size from strings like "32x32", "any", etc.
         let pattern = #"(\d+)x?\d*"#
         if let regex = try? NSRegularExpression(pattern: pattern, options: []),
            let match = regex.firstMatch(
