@@ -1,6 +1,6 @@
 import Foundation
 import Observation
-
+import SwiftUI
 
 
 // MARK: - SearchEngine
@@ -53,10 +53,12 @@ public struct SearchSuggestion: Identifiable, Hashable {
     public let text: String
     public let type: SuggestionType
 
-    public enum SuggestionType {
-        case history
-        case suggestion
-        case bookmark
+//    Also provieds an SF Symbol for the type
+    public enum SuggestionType: String {
+        case history = "clock.arrow.circlepath"
+        case query = "magnifyingglass"
+        case url = "globe"
+        case bookmark = "bookmark"
     }
 }
 
@@ -77,7 +79,7 @@ public struct SearchHistoryItem: Identifiable, Codable, Hashable {
     }
 
     // Custom coding keys to handle SearchEngine encoding/decoding
-    public  enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case id
         case query
         case timestamp
@@ -112,13 +114,14 @@ public struct SearchHistoryItem: Identifiable, Codable, Hashable {
 
 /// Dedicated manager for handling search engine functionality
 @Observable
+@MainActor
 public class SearchManager {
     public static let shared = SearchManager()
 
     // MARK: - Properties
 
     /// Current search suggestions
-    private(set) var suggestions: [SearchSuggestion] = []
+    public var suggestions: [SearchSuggestion] = []
 
     /// Search history (limited to recent items)
     private(set) var searchHistory: [SearchHistoryItem] = []
@@ -127,7 +130,7 @@ public class SearchManager {
     private let maxHistoryItems = 100
 
     /// Maximum number of suggestions to show
-    private let maxSuggestions = 10
+    private let maxSuggestions = 5
 
     /// UserDefaults key for search history
     private let historyKey = "SearchHistory"
@@ -252,7 +255,9 @@ public class SearchManager {
     /// Clears all search suggestions
     public func clearSuggestions() {
         suggestionTask?.cancel()
-        suggestions = []
+        withAnimation {
+            suggestions = []
+        }
     }
 
     /// Clears search history
@@ -277,37 +282,44 @@ public class SearchManager {
         suggestionsURL != nil
     }
 
-    // MARK: - Private Methods
-
     /// Checks if a string is a valid URL
-    private func isValidURL(_ string: String) -> Bool {
+    public func isValidURL(_ string: String) -> Bool {
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Reject strings with spaces (except at start/end which we trim)
+        if trimmed.contains(" ") {
+            return false
+        }
+        
         // First check if it's already a complete URL
-        if let url = URL(string: string),
+        if let url = URL(string: trimmed),
            let scheme = url.scheme,
-           ["http", "https", "file", "ftp"].contains(scheme.lowercased()) {
+           ["http", "https", "file", "ftp"].contains(scheme.lowercased()),
+           let host = url.host,
+           !host.isEmpty {
             return true
         }
 
         // Check for common domain patterns without protocol
         let domainPatterns = [
-            #"^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(/.*)?$"#, // Standard domain
-            #"^localhost(:[0-9]+)?(/.*)?$"#, // Localhost
-            #"^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]+)?(/.*)?$"# // IP address
+            #"^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.([a-zA-Z]{2,}|[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(:[0-9]+)?(/[^\s]*)?$"#, // Standard domain with valid TLD
+            #"^localhost(:[0-9]+)?(/[^\s]*)?$"#, // Localhost
+            #"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:[0-9]+)?(/[^\s]*)?$"# // Valid IP address
         ]
 
         for pattern in domainPatterns {
-            let regex = try? NSRegularExpression(pattern: pattern)
-            let range = NSRange(string.startIndex ..< string.endIndex, in: string)
-            if regex?.firstMatch(in: string, options: [], range: range) != nil {
+            let regex = try? NSRegularExpression(pattern: pattern, options: [])
+            let range = NSRange(trimmed.startIndex ..< trimmed.endIndex, in: trimmed)
+            if regex?.firstMatch(in: trimmed, options: [], range: range) != nil {
                 return true
             }
         }
 
         return false
     }
-
+    
     /// Normalizes a URL by adding protocol if missing
-    private func normalizeURL(_ string: String) -> String {
+    public func normalizeURL(_ string: String) -> String {
         if string.hasPrefix("http://") || string.hasPrefix("https://") || string.hasPrefix("file://") {
             return string
         }
@@ -319,6 +331,8 @@ public class SearchManager {
 
         return string
     }
+    
+    // MARK: - Private Methods
 
     /// Adds a query to search history
     private func addToHistory(query: String) {
@@ -381,7 +395,9 @@ public class SearchManager {
                     }
                 }
 
-                self.suggestions = Array(uniqueSuggestions.prefix(maxSuggestions))
+                withAnimation {
+                    self.suggestions = Array(uniqueSuggestions.prefix(maxSuggestions))
+                }
             }
         } catch {
             // Silently fail - suggestions are optional
@@ -406,30 +422,68 @@ public class SearchManager {
 
     /// Parses Google-style suggestions (JSON array format)
     private func parseGoogleSuggestions(from data: Data) throws -> [SearchSuggestion] {
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [Any],
-              json.count > 1,
+        // Try direct JSON parsing first, then fallback to string conversion if needed
+        do {
+            let json = try JSONSerialization.jsonObject(with: data) as? [Any]
+            if let json = json {
+                return try parseGoogleJSON(json)
+            }
+        } catch {
+            // Fallback: try different encodings
+            let encodings: [String.Encoding] = [.utf8, .ascii, .isoLatin1, .windowsCP1252]
+            for encoding in encodings {
+                if let jsonString = String(data: data, encoding: encoding),
+                   let jsonData = jsonString.data(using: .utf8) {
+                    do {
+                        let json = try JSONSerialization.jsonObject(with: jsonData) as? [Any]
+                        if let json = json {
+                            return try parseGoogleJSON(json)
+                        }
+                    } catch {
+                        continue
+                    }
+                }
+            }
+        }
+        
+        return []
+    }
+    
+    private func parseGoogleJSON(_ json: [Any]) throws -> [SearchSuggestion] {
+        guard json.count > 1,
               let suggestions = json[1] as? [String] else {
             return []
         }
 
-        return suggestions.prefix(5).map { SearchSuggestion(text: $0, type: .suggestion) }
+        return suggestions.prefix(5).map {
+            let isURL = isValidURL($0)
+            return SearchSuggestion(text: $0, type: isURL ? .url : .query)
+        }
     }
 
     /// Parses DuckDuckGo suggestions (JSON array format)
     private func parseDuckDuckGoSuggestions(from data: Data) throws -> [SearchSuggestion] {
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+        // Ensure data is properly encoded as UTF-8
+        guard let jsonString = String(data: data, encoding: .utf8),
+              let jsonData = jsonString.data(using: .utf8),
+              let json = try JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]] else {
             return []
         }
 
         return json.compactMap { item in
             guard let phrase = item["phrase"] as? String else { return nil }
-            return SearchSuggestion(text: phrase, type: .suggestion)
+            let isURL = isValidURL(phrase)
+
+            return SearchSuggestion(text: phrase, type: isURL ? .url : .query)
         }.prefix(5).map(\.self)
     }
 
     /// Parses Bing suggestions (JSON object format)
     private func parseBingSuggestions(from data: Data) throws -> [SearchSuggestion] {
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+        // Ensure data is properly encoded as UTF-8
+        guard let jsonString = String(data: data, encoding: .utf8),
+              let jsonData = jsonString.data(using: .utf8),
+              let json = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
               let suggestionGroups = json["suggestionGroups"] as? [[String: Any]],
               let firstGroup = suggestionGroups.first,
               let searchSuggestions = firstGroup["searchSuggestions"] as? [[String: Any]] else {
@@ -438,7 +492,9 @@ public class SearchManager {
 
         return searchSuggestions.compactMap { item in
             guard let query = item["query"] as? String else { return nil }
-            return SearchSuggestion(text: query, type: .suggestion)
+            let isURL = isValidURL(query)
+
+            return SearchSuggestion(text: query, type: isURL ? .url : .query)
         }.prefix(5).map(\.self)
     }
 
