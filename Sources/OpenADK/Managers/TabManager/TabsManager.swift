@@ -81,7 +81,8 @@ public class TabsManager: TabManagerProtocol {
         newTab.setContent(content: newWebPage)
 
         let tabRep = TabRepresentation(id: newTab.id, index: tabLocation.tabs.count)
-
+        newTab.tabRepresentation = tabRep
+        
         addTab(newTab)
 
         tabLocation.appendTabRep(tabRep)
