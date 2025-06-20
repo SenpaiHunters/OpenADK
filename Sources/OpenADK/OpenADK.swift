@@ -3,9 +3,13 @@ import Observation
 import OpenADKObjC
 import SwiftUI
 
+// MARK: - AltoConfiguration
+
 public struct AltoConfiguration {
     var name: String?
 }
+
+// MARK: - Alto
 
 @Observable
 public class Alto {
@@ -24,10 +28,9 @@ public class Alto {
     public let paswordManager: String? // ToDo
     public let downloadManager: String? // ToDo
     public let modelManager: String? // ToDo (This will be AI intigration for local and cloud based LLMs)
-    
+
     // public let searchManager: SearchManager
 
-    
     private init() {
         configuration = nil
 

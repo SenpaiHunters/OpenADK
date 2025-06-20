@@ -1,7 +1,9 @@
 //
 
-import SwiftUI
 import OpenADKObjC
+import SwiftUI
+
+// MARK: - NSWebView
 
 /// Allows the Appkit native WKWebView to be used in SwiftUI
 public struct NSWebView: NSViewRepresentable {
@@ -24,12 +26,10 @@ public struct NSWebView: NSViewRepresentable {
         }
     }
 
-    public func updateNSView(_ nsView: NSViewType, context _: Context) {
-
-
-    }
+    public func updateNSView(_: NSViewType, context _: Context) {}
 }
 
+// MARK: - WebViewContainer
 
 public struct WebViewContainer: View, NSViewRepresentable {
     public typealias ContentView = NSViewContainerView<AltoWebView>
@@ -37,30 +37,31 @@ public struct WebViewContainer: View, NSViewRepresentable {
 
     let contentView: NSViewContainerView<AltoWebView>
     let topContentInset: CGFloat
-    
+
     public init(contentView: NSViewContainerView<AltoWebView>, topContentInset: CGFloat) {
         self.contentView = contentView
         self.topContentInset = topContentInset
     }
-    
-    public func makeNSView(context: Context) -> NSViewType {
-        return NSViewType()
+
+    public func makeNSView(context _: Context) -> NSViewType {
+        NSViewType()
     }
 
-    public func updateNSView(_ nsView: NSViewContainerView<ContentView>, context: Context) {
+    public func updateNSView(_ nsView: NSViewContainerView<ContentView>, context _: Context) {
         nsView.contentView = contentView
     }
 }
 
-
-import Foundation
 import AppKit
+import Foundation
+
+// MARK: - NSViewContainerView
 
 /// A NSView which simply adds some view to its view hierarchy
 public class NSViewContainerView<ContentView: NSView>: NSView {
     public var contentView: ContentView? {
         didSet {
-            guard oldValue !== contentView, let contentView = contentView else { return }
+            guard oldValue !== contentView, let contentView else { return }
             insertNewContentView(contentView, oldValue: oldValue)
         }
     }
@@ -68,8 +69,8 @@ public class NSViewContainerView<ContentView: NSView>: NSView {
     public init(contentView: ContentView?) {
         self.contentView = contentView
         super.init(frame: NSRect())
-        if let contentView = contentView {
-            self.insertNewContentView(contentView, oldValue: nil)
+        if let contentView {
+            insertNewContentView(contentView, oldValue: nil)
         }
     }
 
@@ -77,14 +78,15 @@ public class NSViewContainerView<ContentView: NSView>: NSView {
         self.init(contentView: nil)
     }
 
-    public required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    public required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
     private func insertNewContentView(_ contentView: ContentView, oldValue: ContentView?) {
         contentView.autoresizingMask = [.width, .height]
         contentView.frame = bounds
-        if let oldValue = oldValue {
+        if let oldValue {
             replaceSubview(oldValue, with: contentView)
         } else {
             addSubview(contentView)

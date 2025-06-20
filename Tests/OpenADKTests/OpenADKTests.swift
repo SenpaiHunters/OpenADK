@@ -1,7 +1,7 @@
 //
 
-@testable import OpenADK
 import Testing
+@testable import OpenADK
 
 struct OpenADKTests {
     @Test func example() async throws {

@@ -1,7 +1,7 @@
 //
 
-import WebKit
 import OpenADKObjC
+import WebKit
 
 /// A base configuration for `WKWebViewConfiguration` used for creating tabs.
 ///
@@ -10,7 +10,7 @@ import OpenADKObjC
 public class AltoWebViewConfigurationBase: WKWebViewConfiguration {
     required init?(coder: NSCoder) { super.init(coder: coder) }
 
-    override public init() {
+    public override init() {
         super.init()
 
         preferences.javaScriptCanOpenWindowsAutomatically = true
@@ -21,7 +21,6 @@ public class AltoWebViewConfigurationBase: WKWebViewConfiguration {
         preferences._setFullScreenEnabled(true)
         preferences._setBackspaceKeyNavigationEnabled(false)
 
-        
         defaultWebpagePreferences.preferredContentMode = .desktop
         defaultWebpagePreferences.allowsContentJavaScript = true
     }

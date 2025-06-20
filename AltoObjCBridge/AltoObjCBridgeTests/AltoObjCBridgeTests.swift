@@ -1,7 +1,7 @@
 //
 
-@testable import AltoObjCBridge
 import Testing
+@testable import AltoObjCBridge
 
 struct AltoObjCBridgeTests {
     @Test func example() async throws {

@@ -2,7 +2,6 @@ import Foundation
 import Observation
 import SwiftUI
 
-
 // MARK: - SearchEngine
 
 /// Supported search engines
@@ -58,7 +57,7 @@ public struct SearchSuggestion: Identifiable, Hashable {
         case history = "clock.arrow.circlepath"
         case query = "magnifyingglass"
         case url = "globe"
-        case bookmark = "bookmark"
+        case bookmark
     }
 }
 
@@ -66,10 +65,10 @@ public struct SearchSuggestion: Identifiable, Hashable {
 
 /// Represents a search history item
 public struct SearchHistoryItem: Identifiable, Codable, Hashable {
-    public  let id: UUID
+    public let id: UUID
     public let query: String
     public let timestamp: Date
-    public  let searchEngine: SearchEngine
+    public let searchEngine: SearchEngine
 
     public init(query: String, searchEngine: SearchEngine) {
         id = UUID()
@@ -169,7 +168,7 @@ public class SearchManager {
     }
 
     /// Returns the home page URL for the search engine
-    public  var homePageURL: String {
+    public var homePageURL: String {
         switch PreferencesManager.shared.searchEngine {
         case .brave:
             "https://search.brave.com/"
@@ -285,12 +284,12 @@ public class SearchManager {
     /// Checks if a string is a valid URL
     public func isValidURL(_ string: String) -> Bool {
         let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         // Reject strings with spaces (except at start/end which we trim)
         if trimmed.contains(" ") {
             return false
         }
-        
+
         // First check if it's already a complete URL
         if let url = URL(string: trimmed),
            let scheme = url.scheme,
@@ -302,9 +301,11 @@ public class SearchManager {
 
         // Check for common domain patterns without protocol
         let domainPatterns = [
-            #"^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.([a-zA-Z]{2,}|[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(:[0-9]+)?(/[^\s]*)?$"#, // Standard domain with valid TLD
+            #"^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.([a-zA-Z]{2,}|[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(:[0-9]+)?(/[^\s]*)?$"#,
+            // Standard domain with valid TLD
             #"^localhost(:[0-9]+)?(/[^\s]*)?$"#, // Localhost
-            #"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:[0-9]+)?(/[^\s]*)?$"# // Valid IP address
+            #"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:[0-9]+)?(/[^\s]*)?$"# // Valid
+            // IP address
         ]
 
         for pattern in domainPatterns {
@@ -317,7 +318,7 @@ public class SearchManager {
 
         return false
     }
-    
+
     /// Normalizes a URL by adding protocol if missing
     public func normalizeURL(_ string: String) -> String {
         if string.hasPrefix("http://") || string.hasPrefix("https://") || string.hasPrefix("file://") {
@@ -331,7 +332,7 @@ public class SearchManager {
 
         return string
     }
-    
+
     // MARK: - Private Methods
 
     /// Adds a query to search history
@@ -369,7 +370,8 @@ public class SearchManager {
     /// Fetches online suggestions from search engine
     private func fetchOnlineSuggestions(for query: String, baseURL: String) async {
         guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: baseURL + encodedQuery) else {
+              let url = URL(string: baseURL + encodedQuery)
+        else {
             return
         }
 
@@ -425,7 +427,7 @@ public class SearchManager {
         // Try direct JSON parsing first, then fallback to string conversion if needed
         do {
             let json = try JSONSerialization.jsonObject(with: data) as? [Any]
-            if let json = json {
+            if let json {
                 return try parseGoogleJSON(json)
             }
         } catch {
@@ -436,7 +438,7 @@ public class SearchManager {
                    let jsonData = jsonString.data(using: .utf8) {
                     do {
                         let json = try JSONSerialization.jsonObject(with: jsonData) as? [Any]
-                        if let json = json {
+                        if let json {
                             return try parseGoogleJSON(json)
                         }
                     } catch {
@@ -445,13 +447,14 @@ public class SearchManager {
                 }
             }
         }
-        
+
         return []
     }
-    
+
     private func parseGoogleJSON(_ json: [Any]) throws -> [SearchSuggestion] {
         guard json.count > 1,
-              let suggestions = json[1] as? [String] else {
+              let suggestions = json[1] as? [String]
+        else {
             return []
         }
 
@@ -466,7 +469,8 @@ public class SearchManager {
         // Ensure data is properly encoded as UTF-8
         guard let jsonString = String(data: data, encoding: .utf8),
               let jsonData = jsonString.data(using: .utf8),
-              let json = try JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]] else {
+              let json = try JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]]
+        else {
             return []
         }
 
@@ -486,7 +490,8 @@ public class SearchManager {
               let json = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
               let suggestionGroups = json["suggestionGroups"] as? [[String: Any]],
               let firstGroup = suggestionGroups.first,
-              let searchSuggestions = firstGroup["searchSuggestions"] as? [[String: Any]] else {
+              let searchSuggestions = firstGroup["searchSuggestions"] as? [[String: Any]]
+        else {
             return []
         }
 
@@ -503,7 +508,8 @@ public class SearchManager {
     /// Loads search history from UserDefaults
     private func loadSearchHistory() {
         guard let data = UserDefaults.standard.data(forKey: historyKey),
-              let history = try? JSONDecoder().decode([SearchHistoryItem].self, from: data) else {
+              let history = try? JSONDecoder().decode([SearchHistoryItem].self, from: data)
+        else {
             return
         }
 
@@ -529,5 +535,4 @@ public extension SearchManager {
     static var privacySearchEngines: [SearchEngine] {
         [.duckduckgo, .brave, .startpage, .searx]
     }
- }
-
+}
