@@ -84,8 +84,6 @@ public class TabsManager: TabManagerProtocol {
         let newWebPage = WebPage(webView: newWebView, state: state, parent: newTab)
         newWebPage.parent = newTab
 
-        print("new page title?", newWebPage.title)
-
         newTab.setContent(content: newWebPage)
 
         let tabRep = TabRepresentation(id: newTab.id, index: tabLocation.tabs.count)

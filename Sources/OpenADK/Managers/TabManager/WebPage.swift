@@ -84,7 +84,6 @@ public class WebPage: NSObject, Identifiable, Displayable {
         if parent?.activeContent?.id != id {
             parent?.activeContent = self
         }
-        print("Hit")
     }
 
     public func goBack() {
@@ -128,8 +127,6 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
 
         canGoBack = webView.canGoBack
         canGoForward = webView.canGoForward
-
-        print(title)
     }
 
     public func webViewDidClose(_: WKWebView) {
@@ -173,8 +170,6 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
 
             if let loc = parent?.location {
                 loc.appendTabRep(tabRep)
-            } else {
-                print("failed to get location")
             }
 
             Alto.shared.cookieManager.setupCookies(for: newWebView)

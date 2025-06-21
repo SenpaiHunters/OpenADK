@@ -23,7 +23,6 @@ open class GenaricState: StateProtocol {
     public var currentSpace: (any SpaceProtocol)?
 
     public var currentContent: [any Displayable]? {
-        print(currentSpace?.currentTab?.activeContent)
         window?.title = currentSpace?.currentTab?.activeContent?.title ?? "WEIRD"
         return currentSpace?.currentTab?.content
     }
