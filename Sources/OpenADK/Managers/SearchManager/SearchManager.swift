@@ -1,3 +1,10 @@
+//
+//  SearchManager.swift
+//  OpenADK
+//
+//  Created by StudioMovieGirl
+//
+
 import Foundation
 import Observation
 import SwiftUI

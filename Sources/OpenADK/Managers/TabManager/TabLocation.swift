@@ -1,4 +1,10 @@
 //
+//  TabLocation.swift
+//  OpenADK
+//
+//  Created by StudioMovieGirl
+//
+
 import AppKit
 import Observation
 
@@ -6,12 +12,12 @@ import Observation
 
 @Observable
 public class TabLocation: TabLocationProtocol {
-    public var name: String
+    public var title: String?
     public var id = UUID()
     public var tabs: [TabRepresentation] = []
 
-    init(name: String) {
-        self.name = name
+    init(title: String? = nil) {
+        self.title = title ?? id.uuidString
     }
 
     public func appendTabRep(_ tabRep: TabRepresentation) {
@@ -28,7 +34,7 @@ public class TabLocation: TabLocationProtocol {
 // MARK: - TabLocationProtocol
 
 public protocol TabLocationProtocol {
-    var name: String { get set }
+    var title: String? { get set }
     var id: UUID { get }
     var tabs: [TabRepresentation] { get set }
 

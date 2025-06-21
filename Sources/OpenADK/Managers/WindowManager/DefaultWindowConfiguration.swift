@@ -1,4 +1,10 @@
 //
+//  DefaultWindowConfiguration.swift
+//  OpenADK
+//
+//  Created by StudioMovieGirl
+//
+
 import AppKit
 import SwiftUI
 
@@ -6,13 +12,15 @@ import SwiftUI
 
 /// Lets us set the default sizing and positioning of a window
 public struct DefaultWindowConfiguration {
-    public let defaultMinimumSize = CGSize(width: 500, height: 400)
-    public let defaultSize = CGSize(width: 1024, height: 768)
+    // MARK: - Properties
 
+    /// Factories to buil the view and state for each new window
     public var viewFactory: ((any StateProtocol) -> (NSView & BrowserView))?
-
     public var stateFactory: () -> any StateProtocol = { GenaricState() }
 
+    /// configurations
+    public let defaultMinimumSize = CGSize(width: 500, height: 400)
+    public let defaultSize = CGSize(width: 1024, height: 768)
     public var windowRec: NSRect {
         NSRect(x: defaultPoint.x, y: defaultPoint.y, width: defaultSize.width, height: defaultSize.height)
     }
@@ -28,7 +36,11 @@ public struct DefaultWindowConfiguration {
         return CGPoint(x: 0, y: 0)
     }
 
+    // MARK: - Inititalizer
+
     public init() {}
+
+    // MARK: - Public Methods
 
     /// Note to devs: the functions must be marked with mutating in order to change the value of the struct
 
@@ -42,29 +54,5 @@ public struct DefaultWindowConfiguration {
     /// Handles AppKit Views
     public mutating func setView(_ viewBuilder: @escaping ((any StateProtocol) -> (NSView & BrowserView))) {
         viewFactory = viewBuilder
-    }
-}
-
-// MARK: - HostingBrowserView
-
-public class HostingBrowserView<V: View>: NSHostingView<V>, BrowserView {
-    public var state: any StateProtocol
-
-    @MainActor @preconcurrency
-    public required init(rootView: V, state: any StateProtocol) {
-        self.state = state
-        super.init(rootView: rootView)
-    }
-
-    public required init(rootView: V) {
-        state = GenaricState()
-        super.init(rootView: rootView)
-    }
-
-    @MainActor @preconcurrency
-    public dynamic required init?(coder _: NSCoder) {
-        // You could support decoding here if needed
-        // For now, safely fail
-        nil
     }
 }

@@ -1,4 +1,10 @@
 //
+//  TabsManager.swift
+//  OpenADK
+//
+//  Created by StudioMovieGirl
+//
+
 import AppKit
 import Observation
 import WebKit
@@ -13,7 +19,7 @@ public class TabsManager: TabManagerProtocol {
     public var state: (any StateProtocol)?
 
     public var globalLocations: [TabLocationProtocol] = [
-        TabLocation(name: "Favorites")
+        TabLocation(title: "Favorites")
     ]
 
     public init(state: (any StateProtocol)? = nil) {
@@ -48,7 +54,7 @@ public class TabsManager: TabManagerProtocol {
             allLocations += space.localLocations
         }
 
-        return allLocations.first(where: { $0.name == location })
+        return allLocations.first(where: { $0.title == location })
     }
 
     public func createNewTab(
@@ -57,7 +63,7 @@ public class TabsManager: TabManagerProtocol {
         configuration: WKWebViewConfiguration = AltoWebViewConfigurationBase(),
         location: String = "unpinned"
     ) {
-        guard let state else {
+        guard var state else {
             return
         }
 
@@ -78,11 +84,13 @@ public class TabsManager: TabManagerProtocol {
         let newWebPage = WebPage(webView: newWebView, state: state, parent: newTab)
         newWebPage.parent = newTab
 
+        print("new page title?", newWebPage.title)
+
         newTab.setContent(content: newWebPage)
 
         let tabRep = TabRepresentation(id: newTab.id, index: tabLocation.tabs.count)
         newTab.tabRepresentation = tabRep
-        
+
         addTab(newTab)
 
         tabLocation.appendTabRep(tabRep)

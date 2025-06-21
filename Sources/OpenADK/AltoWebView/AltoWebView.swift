@@ -1,4 +1,10 @@
 //
+//  AltoWebView.swift
+//  Alto
+//
+//  Created by StudioMovieGirl
+//
+
 import AppKit
 import WebKit
 
@@ -7,6 +13,7 @@ import WebKit
 /// Custom verson of WKWebView to avoid needing an extra class for managment
 @Observable
 public class AltoWebView: WKWebView, webViewProtocol {
+    public var ownerTab: WebPage?
     public var currentConfiguration: WKWebViewConfiguration
     public var delegate: WKUIDelegate?
     public var navDelegate: WKNavigationDelegate?
@@ -26,6 +33,11 @@ public class AltoWebView: WKWebView, webViewProtocol {
     }
 
     deinit {}
+
+    public override func mouseDown(with theEvent: NSEvent) {
+        super.mouseDown(with: theEvent)
+        ownerTab?.handleMouseDown()
+    }
 }
 
 extension WKWebView {

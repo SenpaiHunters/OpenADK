@@ -1,8 +1,8 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <WebKit/WebKit.h>
-#import <OpenADKObjC/test.h>
+
+#import <OpenADKObjC/Beam-Bridging-Header.h>
 
 //! Project version number for OpenADKObjC.
 FOUNDATION_EXPORT double OpenADKObjCVersionNumber;

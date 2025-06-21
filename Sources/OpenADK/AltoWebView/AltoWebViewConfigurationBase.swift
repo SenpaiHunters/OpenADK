@@ -1,4 +1,9 @@
 //
+//  AltoWebViewConfigurationBase.swift
+//  Alto
+//
+//  Created by StudioMovieGirl
+//
 
 import OpenADKObjC
 import WebKit
