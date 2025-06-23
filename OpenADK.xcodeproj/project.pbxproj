@@ -57,10 +57,12 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				OpenADKObjC/OpenADKObjC.h,
+				"OpenADKObjC/WK-header.h",
 				"OpenADKObjC/WKWebsiteDataStore+Private.m",
 			);
 			publicHeaders = (
 				OpenADKObjC/OpenADKObjC.h,
+				"OpenADKObjC/WK-header.h",
 			);
 			target = C4AFFE452E00AB1B001D60F8 /* OpenADKObjC */;
 		};
