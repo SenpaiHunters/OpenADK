@@ -2,7 +2,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import <OpenADKObjC/Beam-Bridging-Header.h>
+#import <OpenADKObjC/WK-header.h>
 
 //! Project version number for OpenADKObjC.
 FOUNDATION_EXPORT double OpenADKObjCVersionNumber;

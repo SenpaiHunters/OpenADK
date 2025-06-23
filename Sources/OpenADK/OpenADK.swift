@@ -18,33 +18,47 @@ public class Alto {
 
     public static let shared = Alto()
 
-    /// global data
-    public var tabs: [UUID: any TabProtocol] = [:] /// a global array of all the tabs across all windows
-    public var spaces: [SpaceProtocol] = [
-        Space(localLocations: [
-            TabLocation(title: "pinned"),
-            TabLocation(title: "unpinned")
-        ]),
-        Space(localLocations: [
-            TabLocation(title: "pinned"),
-            TabLocation(title: "unpinned")
-        ])
-    ] /// a global array of all the tabs across all windows
-    public var profiles: String? /// TODO: impliment this
+    // Global shared data across browser windows
+    public var tabs: [UUID: GenaricTab] = [:]
+    public var spaces: [Space] = []
 
-    /// global managers
+    // Global managers
     public let windowManager: WindowManager
     public let cookieManager: CookiesManager
     public let faviconManager: FaviconManager
-    public let downloadManager: String? = nil // TODO: Handle Download
-
+    public let profileManager: ProfileManager
+    public let spaceManager: SpaceManager
     // MARK: - Initialization
 
-    /// Initilizes all of the global managers
     private init() {
+        // Set up managers
         windowManager = WindowManager()
         cookieManager = CookiesManager()
         faviconManager = FaviconManager()
+        profileManager = ProfileManager()
+        spaceManager = SpaceManager()
+        
+        
+        profileManager.createNewProfile(name: "test")
+        
+        let test = profileManager.getProfile(name: "test")
+        if test != nil {
+            print("test found")
+        } else {
+            print("Test not found")
+        }
+        // Set up spaces
+        let defaultProfile = profileManager.defaultProfile
+        spaces = [
+            Space(profile: defaultProfile, name: "Latent Space", localLocations: [
+                TabLocation(title: "pinned"),
+                TabLocation(title: "unpinned")
+            ]),
+            Space(profile: test ?? defaultProfile, name: "The Final Frontier", localLocations: [
+                TabLocation(title: "pinned"),
+                TabLocation(title: "unpinned")
+            ])
+        ]
     }
 
     // MARK: - Public Methods
@@ -52,7 +66,7 @@ public class Alto {
     /// Retreives a tab from the global tab storage via id
     /// - Parameter id: The id of the tab
     /// - Returns: A tab conforming to TabProtocol with that matching id or nil
-    public func getTab(id: UUID) -> (any TabProtocol)? {
+    public func getTab(id: UUID) -> GenaricTab? {
         guard let tab = tabs.first(where: { $0.key == id })?.value else {
             return nil
         }

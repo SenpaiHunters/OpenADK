@@ -29,7 +29,7 @@ public final class WindowManager {
 
     /// Creates a window with designated content
     @discardableResult
-    public func createWindow(tabs _: [any TabProtocol]) -> AltoWindow? {
+    public func createWindow(tabs _: [GenaricTab]) -> AltoWindow? {
         guard let viewFactory = configuration.viewFactory else {
             print("Error: viewFactory not set in DefaultWindowConfiguration.")
             return nil
@@ -56,7 +56,7 @@ public final class WindowManager {
     public func createWindow(
         contentRect: NSRect,
         contentView: NSView,
-        state: any StateProtocol
+        state: GenaricState
     ) -> AltoWindow? {
         let newState = configuration.stateFactory()
 

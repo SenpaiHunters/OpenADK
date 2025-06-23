@@ -56,12 +56,10 @@
 		C4AFFE562E00AC6A001D60F8 /* Exceptions for "Sources" folder in "OpenADKObjC" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				"OpenADKObjC/Beam-Bridging-Header.h",
 				OpenADKObjC/OpenADKObjC.h,
 				"OpenADKObjC/WKWebsiteDataStore+Private.m",
 			);
 			publicHeaders = (
-				"OpenADKObjC/Beam-Bridging-Header.h",
 				OpenADKObjC/OpenADKObjC.h,
 			);
 			target = C4AFFE452E00AB1B001D60F8 /* OpenADKObjC */;

@@ -25,7 +25,6 @@ public final class CookiesManager: NSObject, WKHTTPCookieStoreObserver {
         for cookie in cookieStorage.cookies ?? [] {
             configuration.websiteDataStore.httpCookieStore.setCookie(cookie)
         }
-
         configuration.websiteDataStore.httpCookieStore.add(self)
     }
 

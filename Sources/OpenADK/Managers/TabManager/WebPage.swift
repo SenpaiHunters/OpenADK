@@ -12,7 +12,7 @@ import WebKit
 
 /// A Protocol for what can be displayed as tab content
 public protocol Displayable {
-    var parent: (any TabProtocol)? { get set }
+    var parent: GenaricTab? { get set }
 
     var id: UUID { get }
     var title: String { get set }
@@ -36,9 +36,9 @@ public protocol Displayable {
 /// A simple webpage that conforms to the Tab Displayable protocol
 @Observable
 public class WebPage: NSObject, Identifiable, Displayable {
-    public var parent: (any TabProtocol)?
+    public var parent: GenaricTab?
 
-    private var state: any StateProtocol
+    private var state: GenaricState
 
     public let id = UUID()
 
@@ -66,7 +66,7 @@ public class WebPage: NSObject, Identifiable, Displayable {
     public var uiDownloadDelegate: WKDownloadDelegate?
     public var navigationDelegate: WKNavigationDelegate?
 
-    init(webView: AltoWebView, state: any StateProtocol, parent _: (any TabProtocol)? = nil) {
+    init(webView: AltoWebView, state: GenaricState, parent _: GenaricTab? = nil) {
         self.webView = webView
         self.state = state
 

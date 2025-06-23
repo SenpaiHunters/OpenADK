@@ -15,18 +15,18 @@ import WebKit
 ///
 ///  Tabs will be stored in Alto in future in order to support tabs being shared between windows (like Arc)
 @Observable
-public class TabsManager: TabManagerProtocol {
-    public var state: (any StateProtocol)?
+public class TabsManager {
+    public var state: GenaricState?
 
-    public var globalLocations: [TabLocationProtocol] = [
+    public var globalLocations: [TabLocation] = [
         TabLocation(title: "Favorites")
     ]
 
-    public init(state: (any StateProtocol)? = nil) {
+    public init(state: GenaricState? = nil) {
         self.state = state
     }
 
-    public func setActiveTab(_ tab: any TabProtocol) {
+    public func setActiveTab(_ tab: GenaricTab) {
         state?.currentSpace?.currentTab = tab
     }
 
@@ -36,7 +36,7 @@ public class TabsManager: TabManagerProtocol {
         }
     }
 
-    public func addTab(_ tab: any TabProtocol) {
+    public func addTab(_ tab: GenaricTab) {
         Alto.shared.tabs[tab.id] = tab
     }
 
@@ -46,13 +46,12 @@ public class TabsManager: TabManagerProtocol {
         Alto.shared.tabs.removeValue(forKey: id)
     }
 
-    public func getLocation(_ location: String) -> TabLocationProtocol? {
-        var allLocations: [any TabLocationProtocol] = []
-        allLocations = allLocations + globalLocations
-
-        for space in Alto.shared.spaces {
-            allLocations += space.localLocations
+    public func getLocation(_ location: String) -> TabLocation? {
+        guard let localLocations = state?.currentSpace?.localLocations else {
+            return nil
         }
+        var allLocations: [TabLocation] = []
+        allLocations = localLocations + globalLocations
 
         return allLocations.first(where: { $0.title == location })
     }
@@ -60,16 +59,19 @@ public class TabsManager: TabManagerProtocol {
     public func createNewTab(
         url: String = "https://www.google.com/",
         frame: CGRect = .zero,
-        configuration: WKWebViewConfiguration = AltoWebViewConfigurationBase(),
         location: String = "unpinned"
     ) {
-        guard var state else {
+        guard let state else {
             return
         }
 
         guard let tabLocation = getLocation(location) else {
             return
         }
+
+        let profileId = state.currentSpace?.profile?.id
+        let dataStore = WKWebsiteDataStore(forIdentifier: profileId!)
+        let configuration = AltoWebViewConfigurationBase(dataStore: dataStore)
 
         let newWebView = AltoWebView(frame: frame, configuration: configuration)
         Alto.shared.cookieManager.setupCookies(for: newWebView)
@@ -94,18 +96,4 @@ public class TabsManager: TabManagerProtocol {
         tabLocation.appendTabRep(tabRep)
         setActiveTab(newTab)
     }
-}
-
-// MARK: - TabManagerProtocol
-
-public protocol TabManagerProtocol {
-    var state: (any StateProtocol)? { get set }
-    var globalLocations: [TabLocationProtocol] { get set }
-
-    func createNewTab(url: String, frame: CGRect, configuration: WKWebViewConfiguration, location: String)
-    func setActiveTab(_ tab: any TabProtocol)
-    func addTab(_ tab: any TabProtocol)
-    func removeTab(_ id: UUID)
-    func getLocation(_ location: String) -> TabLocationProtocol?
-    func closeActiveTab()
 }

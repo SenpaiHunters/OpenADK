@@ -291,12 +291,12 @@ public class SearchManager {
     /// Checks if a string is a valid URL
     public func isValidURL(_ string: String) -> Bool {
         let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         // Reject empty strings or strings with spaces
         if trimmed.isEmpty || trimmed.contains(" ") {
             return false
         }
-        
+
         // First check if it's already a complete URL with scheme
         if let url = URL(string: trimmed),
            let scheme = url.scheme,
@@ -305,11 +305,11 @@ public class SearchManager {
            !host.isEmpty {
             return true
         }
-        
+
         // For strings without scheme, validate as domain-like patterns
         return isValidDomainPattern(trimmed)
     }
-    
+
     /// Normalizes a URL by adding protocol if missing
     public func normalizeURL(_ string: String) -> String {
         if string.hasPrefix("http://") || string.hasPrefix("https://") || string.hasPrefix("file://") {
@@ -325,7 +325,7 @@ public class SearchManager {
     }
 
     // MARK: - Private Methods
-    
+
     /// Validates whether a string matches a valid domain pattern.
     ///
     /// This method checks if the input string represents a valid domain pattern,
@@ -344,12 +344,12 @@ public class SearchManager {
             let remainder = String(string.dropFirst(9)) // "localhost".count = 9
             return remainder.isEmpty || remainder.hasPrefix(":") || remainder.hasPrefix("/")
         }
-        
+
         // Handle IP addresses
         if isValidIPAddress(string) {
             return true
         }
-        
+
         // Handle domain names
         return isValidDomainName(string)
     }
@@ -376,34 +376,34 @@ public class SearchManager {
         // Split by '/' to separate IP from path
         let components = string.components(separatedBy: "/")
         let ipPart = components[0]
-        
+
         // Split by ':' to separate IP from port
         let ipPortComponents = ipPart.components(separatedBy: ":")
         let ipOnly = ipPortComponents[0]
-        
+
         // Validate port if present
         if ipPortComponents.count == 2 {
-            guard let port = Int(ipPortComponents[1]), port > 0 && port <= 65535 else {
+            guard let port = Int(ipPortComponents[1]), port > 0, port <= 65535 else {
                 return false
             }
         } else if ipPortComponents.count > 2 {
             return false
         }
-        
+
         // Validate IP address format
         let octets = ipOnly.components(separatedBy: ".")
         guard octets.count == 4 else { return false }
-        
+
         for octet in octets {
-            guard let num = Int(octet), num >= 0 && num <= 255 else {
+            guard let num = Int(octet), num >= 0, num <= 255 else {
                 return false
             }
             // Reject leading zeros (except for "0" itself)
-            if octet.count > 1 && octet.hasPrefix("0") {
+            if octet.count > 1, octet.hasPrefix("0") {
                 return false
             }
         }
-        
+
         return true
     }
 
@@ -432,39 +432,39 @@ public class SearchManager {
         // Split by '/' to separate domain from path
         let components = string.components(separatedBy: "/")
         let domainPart = components[0]
-        
+
         // Split by ':' to separate domain from port
         let domainPortComponents = domainPart.components(separatedBy: ":")
         let domainOnly = domainPortComponents[0]
-        
+
         // Validate port if present
         if domainPortComponents.count == 2 {
-            guard let port = Int(domainPortComponents[1]), port > 0 && port <= 65535 else {
+            guard let port = Int(domainPortComponents[1]), port > 0, port <= 65535 else {
                 return false
             }
         } else if domainPortComponents.count > 2 {
             return false
         }
-        
+
         // Domain must contain at least one dot
         guard domainOnly.contains(".") else { return false }
-        
+
         let parts = domainOnly.components(separatedBy: ".")
         guard parts.count >= 2 else { return false }
-        
+
         // Validate each part of the domain
         for part in parts {
             if !isValidDomainPart(part) {
                 return false
             }
         }
-        
+
         // Last part (TLD) must be at least 2 characters and all letters
         let tld = parts.last!
-        guard tld.count >= 2 && tld.allSatisfy({ $0.isLetter }) else {
+        guard tld.count >= 2, tld.allSatisfy(\.isLetter) else {
             return false
         }
-        
+
         return true
     }
 
@@ -488,18 +488,17 @@ public class SearchManager {
     private func isValidDomainPart(_ part: String) -> Bool {
         // Domain parts can't be empty
         guard !part.isEmpty else { return false }
-        
+
         // Can't start or end with hyphen
         if part.hasPrefix("-") || part.hasSuffix("-") {
             return false
         }
-        
+
         // Must contain only alphanumeric characters and hyphens
         return part.allSatisfy { char in
             char.isLetter || char.isNumber || char == "-"
         }
     }
-
 
     /// Adds a query to search history
     private func addToHistory(query: String) {

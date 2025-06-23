@@ -14,7 +14,7 @@ public class AltoWindow: NSWindow {
     // MARK: - Properties
 
     public var id = UUID()
-    private var state: any StateProtocol
+    private var state: GenaricState
     public var showWinowButtons = false
 
     // MARK: - Initiation
@@ -24,10 +24,10 @@ public class AltoWindow: NSWindow {
     ///   - contentRect: The sizing and positioning of the window
     ///   - contentView: The content to display
     ///   - state: A State to manage the view of the window
-    init(
+    public init(
         contentRect: NSRect,
         contentView: NSView,
-        state: any StateProtocol,
+        state: GenaricState,
         minimumSize: CGSize? = nil
     ) {
         self.state = state
@@ -54,7 +54,7 @@ public class AltoWindow: NSWindow {
             standardWindowButton(NSWindow.ButtonType.miniaturizeButton)?.isHidden = true
         }
 
-        let windowTitle = state.currentSpace?.currentTab?.activeContent?.title ?? state.currentSpace?.title
+        let windowTitle = state.currentSpace?.currentTab?.activeContent?.title ?? state.currentSpace?.name
         title = windowTitle ?? "Untitiled"
         self.state.window = self
         self.contentView = contentView
@@ -68,5 +68,5 @@ public class AltoWindow: NSWindow {
 // MARK: - BrowserView
 
 public protocol BrowserView {
-    var state: any StateProtocol { get set }
+    var state: GenaricState { get set }
 }

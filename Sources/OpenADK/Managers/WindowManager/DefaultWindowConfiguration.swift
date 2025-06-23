@@ -15,8 +15,8 @@ public struct DefaultWindowConfiguration {
     // MARK: - Properties
 
     /// Factories to buil the view and state for each new window
-    public var viewFactory: ((any StateProtocol) -> (NSView & BrowserView))?
-    public var stateFactory: () -> any StateProtocol = { GenaricState() }
+    public var viewFactory: ((GenaricState) -> (NSView & BrowserView))?
+    public var stateFactory: () -> GenaricState = { GenaricState() }
 
     /// configurations
     public let defaultMinimumSize = CGSize(width: 500, height: 400)
@@ -45,14 +45,14 @@ public struct DefaultWindowConfiguration {
     /// Note to devs: the functions must be marked with mutating in order to change the value of the struct
 
     /// Handles swiftUI Views
-    public mutating func setView(_ viewBuilder: @escaping ((any StateProtocol) -> some View)) {
+    public mutating func setView(_ viewBuilder: @escaping ((GenaricState) -> some View)) {
         viewFactory = { state in
             HostingBrowserView(rootView: viewBuilder(state), state: state)
         }
     }
 
     /// Handles AppKit Views
-    public mutating func setView(_ viewBuilder: @escaping ((any StateProtocol) -> (NSView & BrowserView))) {
+    public mutating func setView(_ viewBuilder: @escaping ((GenaricState) -> (NSView & BrowserView))) {
         viewFactory = viewBuilder
     }
 }

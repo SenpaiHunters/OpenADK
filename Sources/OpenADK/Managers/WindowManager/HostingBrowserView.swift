@@ -11,10 +11,10 @@ import SwiftUI
 
 /// An NSHosting veiw to wrap SwiftUI Views
 public class HostingBrowserView<V: View>: NSHostingView<V>, BrowserView {
-    public var state: any StateProtocol
+    public var state: GenaricState
 
     @MainActor @preconcurrency
-    public required init(rootView: V, state: any StateProtocol) {
+    public required init(rootView: V, state: GenaricState) {
         self.state = state
         super.init(rootView: rootView)
     }
