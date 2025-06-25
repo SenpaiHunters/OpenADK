@@ -23,6 +23,8 @@ open class DefaultProfileConfig {
 
 /// Handles the storage and data management around creating and loading profiles
 open class ProfileManager {
+    public static let shared = ProfileManager()
+
     private let key = "Profiles"
     public var profiles: [Profile] = []
     public var defaultProfile: Profile {

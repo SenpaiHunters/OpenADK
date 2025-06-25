@@ -1,5 +1,5 @@
 //
-//  AltoState.swift
+//  ADKState.swift
 //  OpenADK
 //
 //  Created by StudioMovieGirl
@@ -9,37 +9,43 @@ import Combine
 import Observation
 import WebKit
 
-// MARK: - GenaricState
+// MARK: - ADKState
 
-/// GenaricState provides a state for each window specificaly
+/// ADKState provides a state for each window specificaly
 /// Allows each window to display a diferent view of the tabs
 @Observable
-open class GenaricState {
+open class ADKState: ADKStateRepresentable {
     // MARK: - Peramaters
 
-    public var id: UUID = .init()
-    public var tabManager = TabsManager()
-  
-    public var window: AltoWindow?
-    public var currentSpace: Space?
-    public var profile: Profile?
+    public var id = UUID()
+    public var tabManager: ADKTabManager
+
+    public weak var window: ADKWindow?
     public var currentContent: [any Displayable]? {
-        window?.title = currentSpace?.currentTab?.activeContent?.title ?? "WEIRD"
-        return currentSpace?.currentTab?.content
+        window?.setTitle("No Title") // TODO: handle nil case
+        return tabManager.currentTab?.content // TODO: Move current tab to tab manager
     }
 
     // MARK: - Initilizer
 
     /// Automaticly asignes the managers state and sets up spaces
-    public init() {
+    public init(tabManager: ADKTabManager = ADKTabManager()) {
+        self.tabManager = tabManager
         tabManager.state = self // Feeds in the state for the tab manager
-
-        currentSpace = Alto.shared.spaces[0]
     }
 
     public func setup(webView: WKWebView) {
-        Alto.shared.cookieManager.setupCookies(for: webView)
+        CookiesManager.shared.setupCookies(for: webView)
     }
+}
 
-    public func setCurrentSpace() {}
+// MARK: - ADKStateRepresentable
+
+public protocol ADKStateRepresentable: AnyObject {
+    var id: UUID { get }
+    var tabManager: ADKTabManager { get set }
+    var window: ADKWindow? { get set }
+    var currentContent: [any Displayable]? { get }
+
+    func setup(webView: WKWebView)
 }

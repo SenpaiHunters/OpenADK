@@ -14,7 +14,7 @@ import WebKit
 
 /// A Protocol for what can be displayed as tab content
 public protocol Displayable {
-    var parent: GenaricTab? { get set }
+    var parent: ADKTab? { get set }
 
     var id: UUID { get }
     var title: String { get set }
@@ -42,12 +42,12 @@ public protocol Displayable {
 /// downloads, and web view lifecycle management. It acts as the bridge between
 /// the browser's tab system and the underlying WKWebView.
 @Observable
-public class WebPage: NSObject, Identifiable, Displayable {
+public class ADKWebPage: NSObject, Identifiable, Displayable {
     /// Reference to the parent tab containing this web page
-    public var parent: GenaricTab?
+    public var parent: ADKTab?
 
     /// The application state manager
-    private var state: GenaricState
+    private var state: ADKState
 
     /// Unique identifier for this web page instance
     public let id = UUID()
@@ -89,7 +89,7 @@ public class WebPage: NSObject, Identifiable, Displayable {
     ///   - webView: The AltoWebView instance to wrap
     ///   - state: The application state manager
     ///   - parent: Optional parent tab reference
-    init(webView: AltoWebView, state: GenaricState, parent: GenaricTab? = nil) {
+    public init(webView: ADKWebView, state: ADKState, parent: ADKTab? = nil) {
         self.webView = webView
         self.state = state
         super.init()
@@ -132,14 +132,14 @@ public class WebPage: NSObject, Identifiable, Displayable {
     /// Returns the SwiftUI view representation of this web page
     /// - Returns: A SwiftUI view containing the web view or a Spacer if unavailable
     public func returnView() -> any View {
-        guard let webview = webView as? AltoWebView else { return Spacer() }
+        guard let webview = webView as? ADKWebView else { return Spacer() }
         let contentview = NSViewContainerView(contentView: webview)
         return WebViewContainer(contentView: contentview, topContentInset: 0.0)
     }
 
     /// Sets up context menu handling for image downloads
     private func setupContextMenuHandling() {
-        guard let altoWebView = webView as? AltoWebView else { return }
+        guard let altoWebView = webView as? ADKWebView else { return }
 
         // Add JavaScript to handle context menu events
         let contextMenuScript = """
@@ -170,7 +170,7 @@ public class WebPage: NSObject, Identifiable, Displayable {
 
 // MARK: WKScriptMessageHandler
 
-extension WebPage: WKScriptMessageHandler {
+extension ADKWebPage: WKScriptMessageHandler {
     /// Handles JavaScript messages from the web view
     /// - Parameters:
     ///   - userContentController: The user content controller
@@ -259,7 +259,7 @@ extension WebPage: WKScriptMessageHandler {
     ///   - blobUrl: The blob URL string
     ///   - filename: The filename to use for the download
     private func handleBlobUrlImage(blobUrl: String, filename: String) {
-        guard let altoWebView = webView as? AltoWebView else { return }
+        guard let altoWebView = webView as? ADKWebView else { return }
 
         // Use JavaScript to convert blob to base64
         let script = """
@@ -321,7 +321,7 @@ extension WebPage: WKScriptMessageHandler {
 
 // MARK: WKNavigationDelegate, WKUIDelegate
 
-extension WebPage: WKNavigationDelegate, WKUIDelegate {
+extension ADKWebPage: WKNavigationDelegate, WKUIDelegate {
     /// Called when the web view finishes loading a page
     /// - Parameters:
     ///   - webView: The web view that finished loading
@@ -330,7 +330,7 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
         title = webView.title ?? "test"
 
         if let url = webView.url {
-            Alto.shared.faviconManager.fetchFaviconFromHTML(webView: webView, baseURL: url) { [weak self] image in
+            FaviconManager.shared.fetchFaviconFromHTML(webView: webView, baseURL: url) { [weak self] image in
                 DispatchQueue.main.async { self?.favicon = image }
 
             }
@@ -420,7 +420,7 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
 
         guard navigationAction.targetFrame == nil else { return nil }
 
-        let newWebView = AltoWebView(frame: .zero, configuration: configuration)
+        let newWebView = ADKWebView(frame: .zero, configuration: configuration)
 
         if navigationAction.navigationType != .other,
            let url = navigationAction.request.url {
@@ -566,9 +566,9 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
     /// Creates a new tab with the provided web view
     /// - Parameter webView: The web view to use for the new tab
     /// - Returns: The created web view instance
-    private func createNewTab(with webView: AltoWebView) -> WKWebView {
-        let newWebPage = WebPage(webView: webView, state: state)
-        let newTab = GenaricTab(state: state)
+    private func createNewTab(with webView: ADKWebView) -> WKWebView {
+        let newWebPage = ADKWebPage(webView: webView, state: state)
+        let newTab = ADKTab(state: state)
         newTab.location = parent?.location
         newTab.setContent(content: newWebPage)
         newWebPage.parent = newTab
@@ -580,7 +580,7 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
         state.tabManager.addTab(newTab)
         parent?.location?.appendTabRep(tabRep)
 
-        Alto.shared.cookieManager.setupCookies(for: webView)
+        CookiesManager.shared.setupCookies(for: webView)
         state.tabManager.setActiveTab(newTab)
 
         return webView

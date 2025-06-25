@@ -1,5 +1,5 @@
 //
-//  AltoTab.swift
+//  ADKTab.swift
 //  OpenADK
 //
 //  Created by StudioMovieGirl
@@ -9,11 +9,11 @@ import AppKit
 import SwiftUI
 import WebKit
 
-// MARK: - GenaricTab
+// MARK: - ADKTab
 
 /// A Genaric Tab class that can be subclassed for more specific browser use cases
 @Observable
-open class GenaricTab: NSObject, Identifiable {
+open class ADKTab: NSObject, Identifiable, ADKTabProtocol {
     public let id = UUID()
 
     public var tabRepresentation: TabRepresentation?
@@ -24,17 +24,17 @@ open class GenaricTab: NSObject, Identifiable {
 
     public var activeContent: Displayable?
 
-    public var state: GenaricState
+    public var state: ADKState
 
-    public var manager: TabsManager? {
+    public var manager: ADKTabManager? {
         state.tabManager
     }
 
     public var isCurrentTab: Bool {
-        state.currentSpace?.currentTab?.id == id
+        manager?.currentTab?.id == id
     }
 
-    init(state: GenaricState) {
+    public init(state: ADKState) {
         self.state = state
     }
 
@@ -59,7 +59,24 @@ open class GenaricTab: NSObject, Identifiable {
         }
 
         if isCurrentTab {
-            state.currentSpace?.currentTab = nil
+            manager?.currentTab = nil
         }
     }
+}
+
+// MARK: - ADKTabProtocol
+
+public protocol ADKTabProtocol: AnyObject, Identifiable {
+    var id: UUID { get }
+    var tabRepresentation: TabRepresentation? { get set }
+    var location: TabLocation? { get set }
+    var content: [any Displayable] { get set }
+    var activeContent: Displayable? { get set }
+    var state: ADKState { get }
+    var manager: ADKTabManager? { get }
+    var isCurrentTab: Bool { get }
+
+    func setContent(content: any Displayable)
+    func createNewTab(_ url: String, _ config: WKWebViewConfiguration, frame: CGRect)
+    func closeTab()
 }

@@ -15,51 +15,68 @@ import WebKit
 ///
 ///  Tabs will be stored in Alto in future in order to support tabs being shared between windows (like Arc)
 @Observable
-public class TabsManager {
-    public var state: GenaricState?
+open class ADKTabManager {
+    public var state: ADKState?
+    public var currentTab: ADKTab?
+    private var profile: Profile?
 
-    public var globalLocations: [TabLocation] = [
-        TabLocation(title: "Favorites")
-    ]
-
-    public init(state: GenaricState? = nil) {
-        self.state = state
+    private var defaultTabLocation: TabLocation {
+        tabLocations[0]
     }
 
-    public func setActiveTab(_ tab: GenaricTab) {
-        state?.currentSpace?.currentTab = tab
+    public var tabLocations: [TabLocation] = []
+
+    public init(state: ADKState? = nil, profile: Profile? = nil, tabLocations: [TabLocation]? = nil) {
+        self.state = state
+        self.profile = profile
+        self.tabLocations = tabLocations ?? [
+            TabLocation()
+        ]
+    }
+
+    public func setupTabs(tabs: [ADKTab], location: TabLocation? = nil) {
+        guard !tabs.isEmpty else {
+            return
+        }
+
+        for tab in tabs {
+            createNewTab(newTab: tab, location: location)
+        }
+
+        currentTab = tabs.last
+    }
+
+    public func setActiveTab(_ tab: ADKTab) {
+        print("ran set active tab")
+        currentTab = tab
     }
 
     public func closeActiveTab() {
-        if let currentTab = state?.currentSpace?.currentTab {
-            currentTab.closeTab()
+        guard let currentTab else {
+            return
         }
+        currentTab.closeTab()
     }
 
-    public func addTab(_ tab: GenaricTab) {
-        Alto.shared.tabs[tab.id] = tab
+    open func addTab(_ tab: ADKTab) {
+        print("added tab")
+        ADKData.shared.tabs[tab.id] = tab
     }
 
     public func removeTab(_ id: UUID) {
-        let tab = Alto.shared.getTab(id: id)
+        let tab = ADKData.shared.getTab(id: id)
         tab?.location?.removeTab(id: id)
-        Alto.shared.tabs.removeValue(forKey: id)
+        ADKData.shared.tabs.removeValue(forKey: id)
     }
 
-    public func getLocation(_ location: String) -> TabLocation? {
-        guard let localLocations = state?.currentSpace?.localLocations else {
-            return nil
-        }
-        var allLocations: [TabLocation] = []
-        allLocations = localLocations + globalLocations
-
-        return allLocations.first(where: { $0.title == location })
+    open func getLocation(_ location: String) -> TabLocation? {
+        tabLocations.first(where: { $0.title == location })
     }
 
-    public func createNewTab(
+    open func createNewTab(
         url: String = "https://www.google.com/",
         frame: CGRect = .zero,
-        location: String = "unpinned"
+        location: String
     ) {
         guard let state else {
             return
@@ -69,26 +86,53 @@ public class TabsManager {
             return
         }
 
-        let profileId = state.currentSpace?.profile?.id
-        let dataStore = WKWebsiteDataStore(forIdentifier: profileId!)
-        let configuration = AltoWebViewConfigurationBase(dataStore: dataStore)
+        let profile = profile ?? ProfileManager.shared.defaultProfile
+        let dataStore = WKWebsiteDataStore(forIdentifier: profile.id)
+        let configuration = ADKWebViewConfigurationBase(dataStore: dataStore)
 
-        let newWebView = AltoWebView(frame: frame, configuration: configuration)
-        Alto.shared.cookieManager.setupCookies(for: newWebView)
+        let newWebView = ADKWebView(frame: frame, configuration: configuration)
+        CookiesManager.shared.setupCookies(for: newWebView)
 
         if let url = URL(string: url) {
             let request = URLRequest(url: url)
             newWebView.load(request)
         }
-        let newTab = GenaricTab(state: state)
+        let newTab = ADKTab(state: state)
         newTab.location = tabLocation
 
-        let newWebPage = WebPage(webView: newWebView, state: state, parent: newTab)
+        let newWebPage = ADKWebPage(webView: newWebView, state: state, parent: newTab)
         newWebPage.parent = newTab
 
         newTab.setContent(content: newWebPage)
 
         let tabRep = TabRepresentation(id: newTab.id, index: tabLocation.tabs.count)
+        newTab.tabRepresentation = tabRep
+
+        addTab(newTab)
+
+        tabLocation.appendTabRep(tabRep)
+        setActiveTab(newTab)
+    }
+
+    open func createNewTab(
+        newTab: ADKTab,
+        location: TabLocation? = nil
+    ) {
+        guard let state else {
+            return
+        }
+
+        let tabLocation = location ?? defaultTabLocation
+
+        let profile = profile ?? ProfileManager.shared.defaultProfile
+        let dataStore = WKWebsiteDataStore(forIdentifier: profile.id)
+        let configuration = ADKWebViewConfigurationBase(dataStore: dataStore)
+
+        newTab.location = tabLocation
+
+        var tabRep = newTab.tabRepresentation!
+        tabRep.index = tabLocation.tabs.count
+
         newTab.tabRepresentation = tabRep
 
         addTab(newTab)

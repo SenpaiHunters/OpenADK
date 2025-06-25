@@ -14,17 +14,17 @@ import SwiftUI
 /// The content view needs to be wrapped in another container to avoid glitching issues and frame resets due to full
 /// screan
 public struct WebViewContainer: View, NSViewRepresentable {
-    public typealias ContentView = NSViewContainerView<AltoWebView>
+    public typealias ContentView = NSViewContainerView<ADKWebView>
     public typealias NSViewType = NSViewContainerView<ContentView>
 
-    let contentView: NSViewContainerView<AltoWebView>
+    let contentView: NSViewContainerView<ADKWebView>
     let topContentInset: CGFloat
 
     /// Allows the webview to be displayed in swiftUI
     /// - Parameters:
     ///   - contentView: A NSViewContainerView holding a webview
     ///   - topContentInset: the inset of the content from the top of the window
-    public init(contentView: NSViewContainerView<AltoWebView>, topContentInset: CGFloat) {
+    public init(contentView: NSViewContainerView<ADKWebView>, topContentInset: CGFloat) {
         self.contentView = contentView
         self.topContentInset = topContentInset
     }

@@ -12,7 +12,7 @@ import WebKit
 ///
 /// This is a modified version of Beam's implementation:
 /// https://github.com/beamlegacy/beam/blob/3fa234d6ad509c2755c16fb3fd240e9142eaa8bb/Beam/Classes/Models/TabAndWebview/BeamWebViewConfiguration/BeamWebViewConfiguration.swift#L4
-public class AltoWebViewConfigurationBase: WKWebViewConfiguration {
+public class ADKWebViewConfigurationBase: WKWebViewConfiguration {
     required init?(coder: NSCoder) { super.init(coder: coder) }
 
     public override init() {

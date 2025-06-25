@@ -12,8 +12,8 @@ import WebKit
 
 /// Custom verson of WKWebView to avoid needing an extra class for management
 @Observable
-public class AltoWebView: WKWebView, webViewProtocol {
-    public var ownerTab: WebPage?
+public class ADKWebView: WKWebView, webViewProtocol {
+    public var ownerTab: ADKWebPage?
     public var currentConfiguration: WKWebViewConfiguration
     public var delegate: WKUIDelegate?
     public var navDelegate: WKNavigationDelegate?
@@ -50,7 +50,7 @@ extension WKWebView {
     /// WKWebView's `configuration` is marked with @NSCopying.
     /// So everytime you try to access it, it creates a copy of it, which is most likely not what we want.
     var configurationWithoutMakingCopy: WKWebViewConfiguration {
-        (self as? AltoWebView)?.currentConfiguration ?? configuration
+        (self as? ADKWebView)?.currentConfiguration ?? configuration
     }
 }
 
