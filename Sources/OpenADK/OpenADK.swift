@@ -41,6 +41,7 @@ public class Alto {
 
         profileManager.createNewProfile(name: "test")
 
+
         let test = profileManager.getProfile(name: "test")
         if test != nil {
             print("test found")

@@ -4,6 +4,7 @@
 
 public class SpaceManager {
     public var currentSpace: Space?
+
     private var currentSpaceIndex = 0
     public var spaces: [Space] {
         Alto.shared.spaces
@@ -18,3 +19,4 @@ public class SpaceManager {
         Alto.shared.spaces.append(newSpace)
     }
 }
+

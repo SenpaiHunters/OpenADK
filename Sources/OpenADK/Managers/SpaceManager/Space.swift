@@ -50,7 +50,9 @@ public class Space: Identifiable, Equatable {
         self.name = name ?? "Space _"
         self.icon = icon
         self.currentTab = currentTab
+
         self.localLocations = localLocations ?? [TabLocation()]
+
         self.profile = profile
     }
 

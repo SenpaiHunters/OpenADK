@@ -2,7 +2,9 @@
 
 import WebKit
 
+
 // MARK: - DefaultProfileConfig
+
 
 open class DefaultProfileConfig {
     public var isDefault: Bool
@@ -10,6 +12,7 @@ open class DefaultProfileConfig {
     public var archiveTime: ArchiveTime
 
     init() {
+
         isDefault = false
         searchEngine = .google
         archiveTime = .halfDay
@@ -23,6 +26,7 @@ open class ProfileManager {
     private let key = "Profiles"
     public var profiles: [Profile] = []
     public var defaultProfile: Profile {
+
         profiles.first(where: { $0.isDefault }) ?? profiles[0]
     }
 
@@ -46,7 +50,7 @@ open class ProfileManager {
         for profile in profiles {
             profile.setDefault(false)
         }
-
+      
         profile.setDefault(true)
         updateStoredProfiles()
     }
@@ -58,6 +62,7 @@ open class ProfileManager {
                 guard data["searchEngine"] != nil,
                       data["archiveTime"] != nil,
                       data["isDefault"] != nil else {
+
                     // Incomplete or invalid profile data — create fresh profile
                     print("Incomplete data for profile named \(name)")
 
@@ -83,6 +88,7 @@ open class ProfileManager {
         }
     }
 
+
     func createNewProfile(name: String) {
         if getProfile(name: name) == nil {
             let defaultUserData = UserData(searchEngine: .google, archiveTime: .halfDay)
@@ -91,6 +97,7 @@ open class ProfileManager {
 
             profiles.append(profile)
             updateStoredProfiles()
+
 
         } else {
             print("A space with that name already exists")
@@ -145,6 +152,7 @@ open class Profile {
     }
 
     public init(id: UUID, data: [String: String]) {
+
         self.id = id
         name = data["name"]!
         cookieStore = WKWebsiteDataStore(forIdentifier: id)
@@ -154,6 +162,7 @@ open class Profile {
 
     public func setDefault(_ value: Bool) {
         isDefault = value
+
     }
 }
 
@@ -209,6 +218,7 @@ extension Bool {
             "false"
         }
     }
+
 
     init(string: String) {
         let string = string.lowercased()

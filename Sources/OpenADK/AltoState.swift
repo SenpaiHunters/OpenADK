@@ -19,7 +19,7 @@ open class GenaricState {
 
     public var id: UUID = .init()
     public var tabManager = TabsManager()
-
+  
     public var window: AltoWindow?
     public var currentSpace: Space?
     public var profile: Profile?

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+
 import UniformTypeIdentifiers
 import WebKit
 
@@ -14,9 +15,11 @@ import WebKit
 /// A Protocol for what can be displayed as tab content
 public protocol Displayable {
     var parent: GenaricTab? { get set }
+
     var id: UUID { get }
     var title: String { get set }
     var favicon: NSImage? { get set }
+
     var canGoBack: Bool { get set }
     var canGoForward: Bool { get set }
     var isLoading: Bool { get set }
@@ -24,13 +27,16 @@ public protocol Displayable {
     func createNewTab(_ url: String, _ configuration: WKWebViewConfiguration, frame: CGRect)
     func goBack()
     func goForward()
+
     func removeWebView()
+  
     func returnView() -> any View
 }
 
 // MARK: - WebPage
 
 /// A simple webpage that conforms to the Tab Displayable protocol
+
 ///
 /// WebPage represents a single web page within a browser tab, handling navigation,
 /// downloads, and web view lifecycle management. It acts as the bridge between
@@ -116,6 +122,7 @@ public class WebPage: NSObject, Identifiable, Displayable {
     public func goForward() { webView.goForward() }
 
     /// Removes and cleans up the web view
+
     public func removeWebView() {
         webView.stopLoading()
         webView.delegate = nil
@@ -308,6 +315,7 @@ extension WebPage: WKScriptMessageHandler {
         } catch {
             print("❌ Error saving image: \(error)")
         }
+
     }
 }
 
@@ -324,12 +332,14 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
         if let url = webView.url {
             Alto.shared.faviconManager.fetchFaviconFromHTML(webView: webView, baseURL: url) { [weak self] image in
                 DispatchQueue.main.async { self?.favicon = image }
+
             }
         }
 
         canGoBack = webView.canGoBack
         canGoForward = webView.canGoForward
     }
+
 
     /// Called when the web view is closed
     /// - Parameter webView: The web view that was closed
@@ -400,12 +410,14 @@ extension WebPage: WKNavigationDelegate, WKUIDelegate {
     ///   - navigationAction: The navigation action that triggered the request
     ///   - windowFeatures: The window features for the new window
     /// - Returns: A new web view instance or nil if the request should be ignored
+
     public func webView(
         _: WKWebView,
         createWebViewWith configuration: WKWebViewConfiguration,
         for navigationAction: WKNavigationAction,
         windowFeatures _: WKWindowFeatures
     ) -> WKWebView? {
+
         guard navigationAction.targetFrame == nil else { return nil }
 
         let newWebView = AltoWebView(frame: .zero, configuration: configuration)
