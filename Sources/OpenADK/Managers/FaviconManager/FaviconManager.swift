@@ -98,7 +98,7 @@ public class FaviconManager {
                 activePreloads.remove(cacheKey)
             }
 
-            print("🚀 [FaviconManager] Memory cache hit for: \(url)")
+            // print("🚀 [FaviconManager] Memory cache hit for: \(url)")
             DispatchQueue.main.async { completion(cached.image) }
 
             return
@@ -111,7 +111,7 @@ public class FaviconManager {
                 let updatedEntry = cachedEntry.withIncrementedAccess()
                 self?.updateDiskCache(entry: updatedEntry, cacheKey: cacheKey)
 
-                print("📁 [FaviconManager] Disk cache hit for: \(url) (access count: \(updatedEntry.accessCount))")
+                // print("📁 [FaviconManager] Disk cache hit for: \(url) (access count: \(updatedEntry.accessCount))")
 
                 DispatchQueue.main.async {
                     self?.memoryCache[cacheKey] = (image, Date())
@@ -121,7 +121,7 @@ public class FaviconManager {
 
                 return
             } else if let cachedEntry = self?.loadFromDiskCache(cacheKey: cacheKey), cachedEntry.isExpired {
-                print("⏰ [FaviconManager] Expired cache for: \(url), refetching")
+                // print("⏰ [FaviconManager] Expired cache for: \(url), refetching")
                 self?.removeFromDiskCache(cacheKey: cacheKey)
             }
 
@@ -169,7 +169,7 @@ public class FaviconManager {
 
         webView.evaluateJavaScript(faviconScript) { [weak self] result, error in
             if let error {
-                print("❌ [FaviconManager] JavaScript error: \(error)")
+                // print("❌ [FaviconManager] JavaScript error: \(error)")
                 self?.fallbackToTraditionalFavicon(baseURL: baseURL, completion: completion)
                 return
             }
@@ -183,7 +183,7 @@ public class FaviconManager {
 
             if let bestLink = sortedLinks.first, let href = bestLink["href"] as? String {
                 let faviconURL = self?.resolveURL(href: href, baseURL: baseURL) ?? href
-                print("🔍 [FaviconManager] Best favicon from HTML: \(faviconURL)")
+                // print("🔍 [FaviconManager] Best favicon from HTML: \(faviconURL)")
 
                 self?.fetchFavicon(for: faviconURL) { image in
                     DispatchQueue.main.async {
@@ -209,9 +209,9 @@ public class FaviconManager {
         if !FileManager.default.fileExists(atPath: cacheDirectory.path) {
             do {
                 try FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
-                print("📁 [FaviconManager] Created cache directory at: \(cacheDirectory.path)")
+                // print("📁 [FaviconManager] Created cache directory at: \(cacheDirectory.path)")
             } catch {
-                print("❌ [FaviconManager] Failed to create cache directory: \(error)")
+                // print("❌ [FaviconManager] Failed to create cache directory: \(error)")
             }
         }
     }
@@ -232,12 +232,12 @@ public class FaviconManager {
     ///   - completion: Completion handler
     private func fetchFromNetwork(url: String, cacheKey: String, completion: @escaping (NSImage?) -> ()) {
         guard let faviconURL = URL(string: url) else {
-            print("❌ [FaviconManager] Invalid favicon URL: \(url)")
+            // print("❌ [FaviconManager] Invalid favicon URL: \(url)")
             DispatchQueue.main.async { completion(nil) }
             return
         }
 
-        print("🌐 [FaviconManager] Fetching from network: \(url)")
+        // print("🌐 [FaviconManager] Fetching from network: \(url)")
         fetchSingleFavicon(from: faviconURL, originalURL: url, cacheKey: cacheKey, completion: completion)
     }
 
@@ -262,24 +262,24 @@ public class FaviconManager {
 
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             if let error {
-                print("❌ [FaviconManager] Network error: \(error.localizedDescription)")
+                // print("❌ [FaviconManager] Network error: \(error.localizedDescription)")
                 self?.tryFaviconFallback(originalURL: originalURL, cacheKey: cacheKey, completion: completion)
                 return
             }
 
             if let httpResponse = response as? HTTPURLResponse, !(200...299).contains(httpResponse.statusCode) {
-                print("❌ [FaviconManager] HTTP error \(httpResponse.statusCode) for: \(url)")
+                // print("❌ [FaviconManager] HTTP error \(httpResponse.statusCode) for: \(url)")
                 self?.tryFaviconFallback(originalURL: originalURL, cacheKey: cacheKey, completion: completion)
                 return
             }
 
             guard let data, !data.isEmpty, let image = NSImage(data: data), image.isValid else {
-                print("❌ [FaviconManager] Invalid image data for: \(url)")
+                // print("❌ [FaviconManager] Invalid image data for: \(url)")
                 self?.tryFaviconFallback(originalURL: originalURL, cacheKey: cacheKey, completion: completion)
                 return
             }
 
-            print("✅ [FaviconManager] Successfully fetched: \(url)")
+            // print("✅ [FaviconManager] Successfully fetched: \(url)")
             self?.saveToDiskCache(data: data, cacheKey: cacheKey, originalURL: originalURL)
 
             DispatchQueue.main.async {
@@ -301,7 +301,7 @@ public class FaviconManager {
             return
         }
 
-        print("🔄 [FaviconManager] Trying fallback methods for: \(host)")
+        // print("🔄 [FaviconManager] Trying fallback methods for: \(host)")
 
         let fallbackURLs = [
             "https://\(host)/apple-touch-icon.png",
@@ -337,13 +337,13 @@ public class FaviconManager {
         completion: @escaping (NSImage?) -> ()
     ) {
         guard index < fallbackURLs.count else {
-            print("⚠️ [FaviconManager] All fallbacks failed, generating default favicon")
+            // print("⚠️ [FaviconManager] All fallbacks failed, generating default favicon")
             generateDefaultFavicon(for: originalURL, completion: completion)
             return
         }
 
         guard let fallbackURL = URL(string: fallbackURLs[index]) else {
-            print("❌ [FaviconManager] Invalid fallback URL: \(fallbackURLs[index])")
+            // print("❌ [FaviconManager] Invalid fallback URL: \(fallbackURLs[index])")
             tryFallbackURLs(
                 fallbackURLs: fallbackURLs,
                 index: index + 1,
@@ -354,14 +354,14 @@ public class FaviconManager {
             return
         }
 
-        print("🔍 [FaviconManager] Trying fallback \(index + 1)/\(fallbackURLs.count): \(fallbackURL)")
+        // print("🔍 [FaviconManager] Trying fallback \(index + 1)/\(fallbackURLs.count): \(fallbackURL)")
 
         var request = URLRequest(url: fallbackURL)
         request.timeoutInterval = 8.0
 
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             if let error {
-                print("❌ [FaviconManager] Fallback \(index + 1) failed: \(error.localizedDescription)")
+                // print("❌ [FaviconManager] Fallback \(index + 1) failed: \(error.localizedDescription)")
                 self?.tryFallbackURLs(
                     fallbackURLs: fallbackURLs,
                     index: index + 1,
@@ -374,7 +374,7 @@ public class FaviconManager {
 
             if let data, let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode),
                let image = NSImage(data: data), image.isValid {
-                print("✅ [FaviconManager] Fallback success from: \(fallbackURL)")
+                // print("✅ [FaviconManager] Fallback success from: \(fallbackURL)")
                 self?.saveToDiskCache(data: data, cacheKey: cacheKey, originalURL: originalURL)
 
                 DispatchQueue.main.async {
@@ -385,7 +385,7 @@ public class FaviconManager {
                 return
             }
 
-            print("❌ [FaviconManager] Fallback \(index + 1) invalid data")
+            // print("❌ [FaviconManager] Fallback \(index + 1) invalid data")
             self?.tryFallbackURLs(
                 fallbackURLs: fallbackURLs,
                 index: index + 1,
@@ -402,7 +402,7 @@ public class FaviconManager {
     ///   - completion: Completion handler
     private func generateDefaultFavicon(for url: String, completion: @escaping (NSImage?) -> ()) {
         guard let domain = URL(string: url)?.host else {
-            print("❌ [FaviconManager] Could not extract domain from URL: \(url)")
+            // print("❌ [FaviconManager] Could not extract domain from URL: \(url)")
             DispatchQueue.main.async { completion(nil) }
             return
         }
@@ -410,7 +410,7 @@ public class FaviconManager {
         let firstLetter = String(domain.prefix(1).uppercased())
         let image = createDefaultFaviconImage(with: firstLetter, domain: domain)
 
-        print("🎨 [FaviconManager] Generated default favicon for \(domain)")
+        // print("🎨 [FaviconManager] Generated default favicon for \(domain)")
         DispatchQueue.main.async { completion(image) }
     }
 
@@ -471,9 +471,9 @@ public class FaviconManager {
             let encodedData = try JSONEncoder().encode(cacheEntry)
             let fileURL = cacheDirectory.appendingPathComponent(cacheKey)
             try encodedData.write(to: fileURL)
-            print("💾 [FaviconManager] Saved to disk cache: \(originalURL)")
+            // print("💾 [FaviconManager] Saved to disk cache: \(originalURL)")
         } catch {
-            print("❌ [FaviconManager] Failed to save to disk cache: \(error)")
+            // print("❌ [FaviconManager] Failed to save to disk cache: \(error)")
         }
     }
 
@@ -487,7 +487,7 @@ public class FaviconManager {
             let fileURL = cacheDirectory.appendingPathComponent(cacheKey)
             try encodedData.write(to: fileURL)
         } catch {
-            print("❌ [FaviconManager] Failed to update disk cache: \(error)")
+            // print("❌ [FaviconManager] Failed to update disk cache: \(error)")
         }
     }
 
@@ -518,7 +518,7 @@ public class FaviconManager {
             let sortedByAccess = memoryCache.sorted { $0.value.lastAccess < $1.value.lastAccess }
             let keysToRemove = sortedByAccess.prefix(memoryCache.count - maxMemoryCacheSize).map(\.key)
             keysToRemove.forEach { memoryCache.removeValue(forKey: $0) }
-            print("🧹 [FaviconManager] Evicted \(keysToRemove.count) items from memory cache")
+            // print("🧹 [FaviconManager] Evicted \(keysToRemove.count) items from memory cache")
         }
     }
 
@@ -575,15 +575,15 @@ public class FaviconManager {
                     }
 
                     if removedCount > 0 {
-                        print("🗂️ [FaviconManager] Removed \(removedCount) least-used items to optimize disk usage")
+                        // print("🗂️ [FaviconManager] Removed \(removedCount) least-used items to optimize disk usage")
                     }
                 }
 
                 if expiredCount > 0 {
-                    print("🧹 [FaviconManager] Cleaned \(expiredCount) expired favicon(s) from cache")
+                    // print("🧹 [FaviconManager] Cleaned \(expiredCount) expired favicon(s) from cache")
                 }
             } catch {
-                print("❌ [FaviconManager] Failed to clean expired cache: \(error)")
+                // print("❌ [FaviconManager] Failed to clean expired cache: \(error)")
             }
         }
     }
@@ -638,7 +638,7 @@ public class FaviconManager {
         }
 
         let faviconURL = resolveURL(href: href, baseURL: baseURL)
-        print("🔍 [FaviconManager] Trying additional favicon from HTML: \(faviconURL)")
+        // print("🔍 [FaviconManager] Trying additional favicon from HTML: \(faviconURL)")
 
         fetchFavicon(for: faviconURL) { [weak self] image in
             DispatchQueue.main.async {
@@ -665,7 +665,7 @@ public class FaviconManager {
             return
         }
         let faviconURL = "https://\(host)/favicon.ico"
-        print("🔄 [FaviconManager] Falling back to traditional favicon: \(faviconURL)")
+        // print("🔄 [FaviconManager] Falling back to traditional favicon: \(faviconURL)")
 
         fetchFavicon(for: faviconURL) { image in
             DispatchQueue.main.async { completion(image) }

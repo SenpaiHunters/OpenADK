@@ -28,6 +28,7 @@ public class Alto {
     public let faviconManager: FaviconManager
     public let profileManager: ProfileManager
     public let spaceManager: SpaceManager
+
     // MARK: - Initialization
 
     private init() {
@@ -37,10 +38,10 @@ public class Alto {
         faviconManager = FaviconManager()
         profileManager = ProfileManager()
         spaceManager = SpaceManager()
-        
-        
+
         profileManager.createNewProfile(name: "test")
-        
+
+
         let test = profileManager.getProfile(name: "test")
         if test != nil {
             print("test found")

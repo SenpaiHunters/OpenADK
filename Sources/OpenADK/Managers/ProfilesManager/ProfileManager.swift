@@ -3,15 +3,19 @@
 import WebKit
 
 
+// MARK: - DefaultProfileConfig
+
+
 open class DefaultProfileConfig {
     public var isDefault: Bool
     public var searchEngine: SearchEngine
     public var archiveTime: ArchiveTime
 
     init() {
-        self.isDefault = false
-        self.searchEngine = .google
-        self.archiveTime = .halfDay
+
+        isDefault = false
+        searchEngine = .google
+        archiveTime = .halfDay
     }
 }
 
@@ -22,9 +26,10 @@ open class ProfileManager {
     private let key = "Profiles"
     public var profiles: [Profile] = []
     public var defaultProfile: Profile {
-        return profiles.first(where: { $0.isDefault }) ?? profiles[0]
+
+        profiles.first(where: { $0.isDefault }) ?? profiles[0]
     }
-    
+
     public init() {
         guard let data = UserDefaults.standard.dictionary(forKey: key) as? [String: [String: String]] else {
             print("Failed to pull profile data from userDefaults")
@@ -35,17 +40,17 @@ open class ProfileManager {
         }
         constructProfile(data: data)
     }
-    
-    func getProfile(name:String) -> Profile? {
-        return profiles.first(where: { $0.name == name })
+
+    func getProfile(name: String) -> Profile? {
+        profiles.first(where: { $0.name == name })
     }
-    
+
     func setDefault(profile: Profile) {
         // makes all profiles not default then sets the proper one
         for profile in profiles {
             profile.setDefault(false)
         }
-        
+      
         profile.setDefault(true)
         updateStoredProfiles()
     }
@@ -57,10 +62,10 @@ open class ProfileManager {
                 guard data["searchEngine"] != nil,
                       data["archiveTime"] != nil,
                       data["isDefault"] != nil else {
-                    
+
                     // Incomplete or invalid profile data — create fresh profile
                     print("Incomplete data for profile named \(name)")
-                    
+
                     let defaultConfig = DefaultProfileConfig()
                     // TODO: This should just retreave it from a default profile
                     let reconstructedData = [
@@ -69,7 +74,7 @@ open class ProfileManager {
                         "searchEngine": data["searchEngine"] ?? defaultConfig.searchEngine.rawValue,
                         "archiveTime": data["searchEngine"] ?? defaultConfig.archiveTime.rawValue
                     ]
-                    
+
                     profiles.append(Profile(id: uuid, data: reconstructedData))
                     continue
                 }
@@ -85,29 +90,28 @@ open class ProfileManager {
 
 
     func createNewProfile(name: String) {
-        if self.getProfile(name:name) == nil {
+        if getProfile(name: name) == nil {
             let defaultUserData = UserData(searchEngine: .google, archiveTime: .halfDay)
             let profile = Profile(name: name, userData: defaultUserData)
             profile.setDefault(profiles.isEmpty ? true : false)
-            
+
             profiles.append(profile)
             updateStoredProfiles()
-            
+
+
         } else {
             print("A space with that name already exists")
         }
     }
-    
-    
+
     func createNewProfile() {
         let defaultUserData = UserData(searchEngine: .google, archiveTime: .halfDay)
         let profile = Profile(name: "Default Profile", userData: defaultUserData)
         profile.setDefault(profiles.isEmpty ? true : false)
-        
+
         profiles.append(profile)
         updateStoredProfiles()
     }
-
 
     func updateStoredProfiles() {
         let data = Dictionary(uniqueKeysWithValues: profiles.map { ($0.id.uuidString, $0.asDictionary) })
@@ -139,7 +143,7 @@ open class Profile {
 
     public init(name: String, userData: UserData, isDefault: Bool? = nil) {
         let defaultConfig = DefaultProfileConfig()
-        
+
         self.name = name
         id = UUID()
         cookieStore = WKWebsiteDataStore(forIdentifier: id)
@@ -148,16 +152,17 @@ open class Profile {
     }
 
     public init(id: UUID, data: [String: String]) {
-        
+
         self.id = id
         name = data["name"]!
-        cookieStore =  WKWebsiteDataStore(forIdentifier: id)
+        cookieStore = WKWebsiteDataStore(forIdentifier: id)
         userData = UserData(data: data)
         isDefault = Bool(string: data["isDefault"]!)
     }
-    
+
     public func setDefault(_ value: Bool) {
-        self.isDefault = value
+        isDefault = value
+
     }
 }
 
@@ -176,7 +181,7 @@ open class UserData {
 
     public init(searchEngine: SearchEngine? = nil, archiveTime: ArchiveTime? = nil) {
         let defaultConfig = DefaultProfileConfig()
-        
+
         self.searchEngine = searchEngine ?? defaultConfig.searchEngine
         self.archiveTime = archiveTime ?? defaultConfig.archiveTime
     }
@@ -205,16 +210,16 @@ public enum ArchiveTime: String, Codable, CaseIterable {
     }
 }
 
-
 extension Bool {
     func toString() -> String {
         if self {
-            return "true"
+            "true"
         } else {
-            return "false"
+            "false"
         }
     }
-    
+
+
     init(string: String) {
         let string = string.lowercased()
         if string == "true" {

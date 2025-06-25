@@ -25,10 +25,14 @@ public final class PreferencesManager {
     @UserDefault(key: "sidebarPosition", defaultValue: "top")
     @ObservationIgnored public var storedSidebarPosition: String
 
+    @UserDefault(key: "downloadPath", defaultValue: "")
+    @ObservationIgnored public var storedDownloadPath: String
+
     /// Publicly available and observed version of Preferences
     public var colorScheme: ColorScheme?
     public var searchEngine: SearchEngine
     public var sidebarPosition: SidebarPosition
+    public var downloadPath: URL
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -37,11 +41,13 @@ public final class PreferencesManager {
         colorScheme = nil
         searchEngine = .google
         sidebarPosition = .top
+        downloadPath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
 
         // Then update with actual stored values
         colorScheme = Self.getScheme(from: storedColorScheme)
         searchEngine = Self.getSearchEngine(string: storedSearchEngine)
         sidebarPosition = Self.getSidebarPosition(from: storedSidebarPosition)
+        downloadPath = Self.getDownloadPath(from: storedDownloadPath)
 
         // Now set up the observers
         $storedColorScheme.sink { [weak self] newValue in
@@ -56,6 +62,11 @@ public final class PreferencesManager {
 
         $storedSidebarPosition.sink { [weak self] newValue in
             self?.sidebarPosition = Self.getSidebarPosition(from: newValue)
+        }
+        .store(in: &cancellables)
+
+        $storedDownloadPath.sink { [weak self] newValue in
+            self?.downloadPath = Self.getDownloadPath(from: newValue)
         }
         .store(in: &cancellables)
     }
@@ -92,6 +103,21 @@ public final class PreferencesManager {
         }
     }
 
+    public static func getDownloadPath(from string: String) -> URL {
+        if string.isEmpty {
+            // Default to Downloads folder
+            return FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
+        } else {
+            // Use stored path, with fallback to Downloads if invalid
+            let url = URL(fileURLWithPath: string)
+            if FileManager.default.fileExists(atPath: url.path) {
+                return url
+            } else {
+                return FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
+            }
+        }
+    }
+
     // Method to update search engine and persist it
     public func setSearchEngine(_ engine: SearchEngine) {
         searchEngine = engine
@@ -108,6 +134,12 @@ public final class PreferencesManager {
     public func setColorScheme(_ scheme: ColorScheme?) {
         colorScheme = scheme
         storedColorScheme = scheme?.stringValue ?? "system"
+    }
+
+    // Method to update download path and persist it
+    public func setDownloadPath(_ path: URL) {
+        downloadPath = path
+        storedDownloadPath = path.path
     }
 }
 

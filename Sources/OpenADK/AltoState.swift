@@ -19,7 +19,7 @@ open class GenaricState {
 
     public var id: UUID = .init()
     public var tabManager = TabsManager()
-    
+  
     public var window: AltoWindow?
     public var currentSpace: Space?
     public var profile: Profile?
@@ -40,8 +40,6 @@ open class GenaricState {
     public func setup(webView: WKWebView) {
         Alto.shared.cookieManager.setupCookies(for: webView)
     }
-    
-    public func setCurrentSpace() {
-        
-    }
+
+    public func setCurrentSpace() {}
 }
