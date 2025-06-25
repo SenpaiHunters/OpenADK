@@ -1,4 +1,10 @@
 //
+//  DefaultWindowConfiguration.swift
+//  OpenADK
+//
+//  Created by StudioMovieGirl
+//
+
 import AppKit
 import SwiftUI
 
@@ -6,13 +12,15 @@ import SwiftUI
 
 /// Lets us set the default sizing and positioning of a window
 public struct DefaultWindowConfiguration {
+    // MARK: - Properties
+
+    /// Factories to buil the view and state for each new window
+    public var viewFactory: ((GenaricState) -> (NSView & BrowserView))?
+    public var stateFactory: () -> GenaricState = { GenaricState() }
+
+    /// configurations
     public let defaultMinimumSize = CGSize(width: 500, height: 400)
     public let defaultSize = CGSize(width: 1024, height: 768)
-
-    public var viewFactory: ((any StateProtocol) -> (NSView & BrowserView))?
-
-    public var stateFactory: () -> any StateProtocol = { GenaricState() }
-
     public var windowRec: NSRect {
         NSRect(x: defaultPoint.x, y: defaultPoint.y, width: defaultSize.width, height: defaultSize.height)
     }
@@ -28,43 +36,23 @@ public struct DefaultWindowConfiguration {
         return CGPoint(x: 0, y: 0)
     }
 
+    // MARK: - Inititalizer
+
     public init() {}
+
+    // MARK: - Public Methods
 
     /// Note to devs: the functions must be marked with mutating in order to change the value of the struct
 
     /// Handles swiftUI Views
-    public mutating func setView(_ viewBuilder: @escaping ((any StateProtocol) -> some View)) {
+    public mutating func setView(_ viewBuilder: @escaping ((GenaricState) -> some View)) {
         viewFactory = { state in
             HostingBrowserView(rootView: viewBuilder(state), state: state)
         }
     }
 
     /// Handles AppKit Views
-    public mutating func setView(_ viewBuilder: @escaping ((any StateProtocol) -> (NSView & BrowserView))) {
+    public mutating func setView(_ viewBuilder: @escaping ((GenaricState) -> (NSView & BrowserView))) {
         viewFactory = viewBuilder
-    }
-}
-
-// MARK: - HostingBrowserView
-
-public class HostingBrowserView<V: View>: NSHostingView<V>, BrowserView {
-    public var state: any StateProtocol
-
-    @MainActor @preconcurrency
-    public required init(rootView: V, state: any StateProtocol) {
-        self.state = state
-        super.init(rootView: rootView)
-    }
-
-    public required init(rootView: V) {
-        state = GenaricState()
-        super.init(rootView: rootView)
-    }
-
-    @MainActor @preconcurrency
-    public dynamic required init?(coder _: NSCoder) {
-        // You could support decoding here if needed
-        // For now, safely fail
-        nil
     }
 }

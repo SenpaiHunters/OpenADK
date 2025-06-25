@@ -1,12 +1,19 @@
 //
+//  AltoWebView.swift
+//  Alto
+//
+//  Created by StudioMovieGirl
+//
+
 import AppKit
 import WebKit
 
 // MARK: - AltoWebView
 
-/// Custom verson of WKWebView to avoid needing an extra class for managment
+/// Custom verson of WKWebView to avoid needing an extra class for management
 @Observable
 public class AltoWebView: WKWebView, webViewProtocol {
+    public var ownerTab: WebPage?
     public var currentConfiguration: WKWebViewConfiguration
     public var delegate: WKUIDelegate?
     public var navDelegate: WKNavigationDelegate?
@@ -18,6 +25,12 @@ public class AltoWebView: WKWebView, webViewProtocol {
         allowsMagnification = true
         customUserAgent =
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+
+        // Notify that a new WebView was created so AdBlock can be set up
+        NotificationCenter.default.post(
+            name: NSNotification.Name("AltoWebViewCreated"),
+            object: self
+        )
     }
 
     @available(*, unavailable)
@@ -26,6 +39,11 @@ public class AltoWebView: WKWebView, webViewProtocol {
     }
 
     deinit {}
+
+    public override func mouseDown(with theEvent: NSEvent) {
+        super.mouseDown(with: theEvent)
+        ownerTab?.handleMouseDown()
+    }
 }
 
 extension WKWebView {

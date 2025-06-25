@@ -1,4 +1,9 @@
-
+//
+//  TabRepresentation.swift
+//  OpenADK
+//
+//  Created by StudioMovieGirl
+//
 
 internal import Algorithms
 import Observation
@@ -31,7 +36,6 @@ public struct TabRepresentation: Transferable, Codable, Comparable, Hashable, Id
 
     // this is for the toDrag system if it is needed
     func toItemProvider() -> NSItemProvider {
-        print("dragged")
         if let data = try? JSONEncoder().encode(self) {
             return NSItemProvider(item: data as NSData, typeIdentifier: "public.json")
         }

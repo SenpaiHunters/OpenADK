@@ -1,6 +1,6 @@
 //
 //  CookieManager.swift
-//  Beam
+//  OpenADK
 //
 //  Created by Ludovic Ollagnier on 06/04/2022.
 //
@@ -19,12 +19,12 @@ public final class CookiesManager: NSObject, WKHTTPCookieStoreObserver {
         cookieStorage = HTTPCookieStorage()
     }
 
+    ///  Feeds cookie to the webview
     public func setupCookies(for webView: WKWebView) {
         let configuration = webView.configurationWithoutMakingCopy
         for cookie in cookieStorage.cookies ?? [] {
             configuration.websiteDataStore.httpCookieStore.setCookie(cookie)
         }
-
         configuration.websiteDataStore.httpCookieStore.add(self)
     }
 
@@ -38,6 +38,7 @@ public final class CookiesManager: NSObject, WKHTTPCookieStoreObserver {
         }
     }
 
+    // Cleares cookies upon request
     public func clearCookiesAndCache() {
         cookieStorage.cookies?.forEach(cookieStorage.deleteCookie)
 

@@ -48,28 +48,21 @@
 /* Begin PBXFileReference section */
 		C449FA3E2DFFCFC400C05EF4 /* OpenADK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OpenADK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C449FA492DFFCFC400C05EF4 /* OpenADKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenADKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		C473AB652E0110DF00139C76 /* OpenADKObjectiveC.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OpenADKObjectiveC.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C4AFFE462E00AB1B001D60F8 /* OpenADKObjC.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OpenADKObjC.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C4D5A4D02DFFDCC900002E71 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		C4AFFE552E00AC6A001D60F8 /* Exceptions for "Sources" folder in "OpenADK" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				OpenADKObjC/OpenADKObjC.docc,
-				OpenADKObjC/OpenADKObjC.h,
-			);
-			target = C449FA3D2DFFCFC400C05EF4 /* OpenADK */;
-		};
 		C4AFFE562E00AC6A001D60F8 /* Exceptions for "Sources" folder in "OpenADKObjC" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				OpenADKObjC/OpenADKObjC.docc,
 				OpenADKObjC/OpenADKObjC.h,
+				"OpenADKObjC/WK-header.h",
+				"OpenADKObjC/WKWebsiteDataStore+Private.m",
 			);
 			publicHeaders = (
 				OpenADKObjC/OpenADKObjC.h,
+				"OpenADKObjC/WK-header.h",
 			);
 			target = C4AFFE452E00AB1B001D60F8 /* OpenADKObjC */;
 		};
@@ -93,7 +86,6 @@
 		C4D5A4D42DFFDF2F00002E71 /* Sources */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				C4AFFE552E00AC6A001D60F8 /* Exceptions for "Sources" folder in "OpenADK" target */,
 				C4AFFE562E00AC6A001D60F8 /* Exceptions for "Sources" folder in "OpenADKObjC" target */,
 			);
 			path = Sources;
@@ -128,13 +120,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		C4AFFE2C2E00A567001D60F8 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		C4AFFE432E00AB1B001D60F8 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -149,7 +134,6 @@
 			isa = PBXGroup;
 			children = (
 				C4D5A4D42DFFDF2F00002E71 /* Sources */,
-				C4D5A4DA2DFFDF3D00002E71 /* Tests */,
 				C449FA3F2DFFCFC400C05EF4 /* Products */,
 				C4D5A4D02DFFDCC900002E71 /* Package.swift */,
 				C4BB72062E0231F7003676F4 /* Frameworks */,
@@ -162,7 +146,7 @@
 				C449FA3E2DFFCFC400C05EF4 /* OpenADK.framework */,
 				C449FA492DFFCFC400C05EF4 /* OpenADKTests.xctest */,
 				C4AFFE462E00AB1B001D60F8 /* OpenADKObjC.framework */,
-				C473AB652E0110DF00139C76 /* OpenADKObjectiveC.framework */,
+				C4D5A4DA2DFFDF3D00002E71 /* Tests */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -178,13 +162,6 @@
 
 /* Begin PBXHeadersBuildPhase section */
 		C449FA392DFFCFC400C05EF4 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C4AFFE2A2E00A567001D60F8 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -248,26 +225,6 @@
 			productReference = C449FA492DFFCFC400C05EF4 /* OpenADKTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		C4AFFE2E2E00A567001D60F8 /* OpenADKObjectiveC */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = C4AFFE362E00A567001D60F8 /* Build configuration list for PBXNativeTarget "OpenADKObjectiveC" */;
-			buildPhases = (
-				C4AFFE2A2E00A567001D60F8 /* Headers */,
-				C4AFFE2B2E00A567001D60F8 /* Sources */,
-				C4AFFE2C2E00A567001D60F8 /* Frameworks */,
-				C4AFFE2D2E00A567001D60F8 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = OpenADKObjectiveC;
-			packageProductDependencies = (
-			);
-			productName = OpenADKObjectiveC;
-			productReference = C473AB652E0110DF00139C76 /* OpenADKObjectiveC.framework */;
-			productType = "com.apple.product-type.framework";
-		};
 		C4AFFE452E00AB1B001D60F8 /* OpenADKObjC */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C4AFFE4D2E00AB1B001D60F8 /* Build configuration list for PBXNativeTarget "OpenADKObjC" */;
@@ -304,9 +261,6 @@
 					C449FA482DFFCFC400C05EF4 = {
 						CreatedOnToolsVersion = 26.0;
 					};
-					C4AFFE2E2E00A567001D60F8 = {
-						CreatedOnToolsVersion = 26.0;
-					};
 					C4AFFE452E00AB1B001D60F8 = {
 						CreatedOnToolsVersion = 26.0;
 					};
@@ -331,7 +285,6 @@
 			targets = (
 				C449FA3D2DFFCFC400C05EF4 /* OpenADK */,
 				C449FA482DFFCFC400C05EF4 /* OpenADKTests */,
-				C4AFFE2E2E00A567001D60F8 /* OpenADKObjectiveC */,
 				C4AFFE452E00AB1B001D60F8 /* OpenADKObjC */,
 			);
 		};
@@ -347,13 +300,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C449FA472DFFCFC400C05EF4 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C4AFFE2D2E00A567001D60F8 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -378,13 +324,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C449FA452DFFCFC400C05EF4 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C4AFFE2B2E00A567001D60F8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -471,6 +410,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/Sources/OpenADKObjC";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -530,6 +470,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/Sources/OpenADKObjC";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -552,6 +493,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/Sources/OpenADKObjC";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 14;
@@ -578,6 +520,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				TAPI_EXCLUDE_PRIVATE_HEADERS = "$(SRCROOT)/Sources/OpenADKObjC";
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 				XROS_DEPLOYMENT_TARGET = 2;
 			};
@@ -596,6 +539,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/Sources/OpenADKObjC";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 14;
@@ -622,6 +566,7 @@
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				TAPI_EXCLUDE_PRIVATE_HEADERS = "$(SRCROOT)/Sources/OpenADKObjC";
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 				XROS_DEPLOYMENT_TARGET = 2;
 			};
@@ -675,72 +620,6 @@
 			};
 			name = Release;
 		};
-		C4AFFE372E00A567001D60F8 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 5TQWF3R63P;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
-				PRODUCT_BUNDLE_IDENTIFIER = Alto.OpenADKObjectiveC;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-			};
-			name = Debug;
-		};
-		C4AFFE382E00A567001D60F8 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 5TQWF3R63P;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
-				PRODUCT_BUNDLE_IDENTIFIER = Alto.OpenADKObjectiveC;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-			};
-			name = Release;
-		};
 		C4AFFE4E2E00AB1B001D60F8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -754,6 +633,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/Sources/OpenADKObjC";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -787,6 +667,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/Sources/OpenADKObjC";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -833,15 +714,6 @@
 			buildConfigurations = (
 				C449FA562DFFCFC400C05EF4 /* Debug */,
 				C449FA572DFFCFC400C05EF4 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		C4AFFE362E00A567001D60F8 /* Build configuration list for PBXNativeTarget "OpenADKObjectiveC" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				C4AFFE372E00A567001D60F8 /* Debug */,
-				C4AFFE382E00A567001D60F8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
