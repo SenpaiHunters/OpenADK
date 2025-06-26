@@ -1,34 +1,32 @@
 //
+//  TabLocation.swift
+//  OpenADK
+//
+//  Created by StudioMovieGirl
+//
+
 import AppKit
 import Observation
 
+// MARK: - TabLocation
+
 @Observable
-public class TabLocation: TabLocationProtocol {
-    public var name: String
+open class TabLocation {
+    public var title: String?
     public var id = UUID()
     public var tabs: [TabRepresentation] = []
 
-    init(name: String) {
-        self.name = name
+    public init(title: String? = nil) {
+        self.title = title ?? id.uuidString
     }
 
     public func appendTabRep(_ tabRep: TabRepresentation) {
         tabs.append(tabRep)
-        let tab = Alto.shared.getTab(id: tabRep.id)
+        let tab = ADKData.shared.getTab(id: tabRep.id)
         tab?.location = self
     }
 
     public func removeTab(id: UUID) {
         tabs.removeAll(where: { $0.id == id })
     }
-}
-
-public protocol TabLocationProtocol {
-    var name: String { get set }
-    var id: UUID { get }
-    var tabs: [TabRepresentation] { get set }
-
-    func appendTabRep(_ tabRep: TabRepresentation)
-
-    func removeTab(id: UUID)
 }

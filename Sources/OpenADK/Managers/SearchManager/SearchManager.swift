@@ -1,7 +1,13 @@
+//
+//  SearchManager.swift
+//  OpenADK
+//
+//  Created by StudioMovieGirl
+//
+
 import Foundation
 import Observation
 import SwiftUI
-
 
 // MARK: - SearchEngine
 
@@ -58,7 +64,7 @@ public struct SearchSuggestion: Identifiable, Hashable {
         case history = "clock.arrow.circlepath"
         case query = "magnifyingglass"
         case url = "globe"
-        case bookmark = "bookmark"
+        case bookmark
     }
 }
 
@@ -66,10 +72,10 @@ public struct SearchSuggestion: Identifiable, Hashable {
 
 /// Represents a search history item
 public struct SearchHistoryItem: Identifiable, Codable, Hashable {
-    public  let id: UUID
+    public let id: UUID
     public let query: String
     public let timestamp: Date
-    public  let searchEngine: SearchEngine
+    public let searchEngine: SearchEngine
 
     public init(query: String, searchEngine: SearchEngine) {
         id = UUID()
@@ -169,7 +175,7 @@ public class SearchManager {
     }
 
     /// Returns the home page URL for the search engine
-    public  var homePageURL: String {
+    public var homePageURL: String {
         switch PreferencesManager.shared.searchEngine {
         case .brave:
             "https://search.brave.com/"
@@ -285,13 +291,13 @@ public class SearchManager {
     /// Checks if a string is a valid URL
     public func isValidURL(_ string: String) -> Bool {
         let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Reject strings with spaces (except at start/end which we trim)
-        if trimmed.contains(" ") {
+
+        // Reject empty strings or strings with spaces
+        if trimmed.isEmpty || trimmed.contains(" ") {
             return false
         }
-        
-        // First check if it's already a complete URL
+
+        // First check if it's already a complete URL with scheme
         if let url = URL(string: trimmed),
            let scheme = url.scheme,
            ["http", "https", "file", "ftp"].contains(scheme.lowercased()),
@@ -300,24 +306,10 @@ public class SearchManager {
             return true
         }
 
-        // Check for common domain patterns without protocol
-        let domainPatterns = [
-            #"^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.([a-zA-Z]{2,}|[a-zA-Z0-9-]+\.[a-zA-Z]{2,})(:[0-9]+)?(/[^\s]*)?$"#, // Standard domain with valid TLD
-            #"^localhost(:[0-9]+)?(/[^\s]*)?$"#, // Localhost
-            #"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:[0-9]+)?(/[^\s]*)?$"# // Valid IP address
-        ]
-
-        for pattern in domainPatterns {
-            let regex = try? NSRegularExpression(pattern: pattern, options: [])
-            let range = NSRange(trimmed.startIndex ..< trimmed.endIndex, in: trimmed)
-            if regex?.firstMatch(in: trimmed, options: [], range: range) != nil {
-                return true
-            }
-        }
-
-        return false
+        // For strings without scheme, validate as domain-like patterns
+        return isValidDomainPattern(trimmed)
     }
-    
+
     /// Normalizes a URL by adding protocol if missing
     public func normalizeURL(_ string: String) -> String {
         if string.hasPrefix("http://") || string.hasPrefix("https://") || string.hasPrefix("file://") {
@@ -331,8 +323,182 @@ public class SearchManager {
 
         return string
     }
-    
+
     // MARK: - Private Methods
+
+    /// Validates whether a string matches a valid domain pattern.
+    ///
+    /// This method checks if the input string represents a valid domain pattern,
+    /// including localhost addresses, IP addresses, and domain names.
+    ///
+    /// - Parameter string: The string to validate as a domain pattern
+    /// - Returns: `true` if the string is a valid domain pattern, `false` otherwise
+    ///
+    /// ## Supported Patterns
+    /// - Localhost: `localhost`, `localhost:8080`, `localhost/path`
+    /// - IP addresses: `192.168.1.1`, `10.0.0.1:3000`
+    /// - Domain names: `example.com`, `subdomain.example.org:8080`
+    private func isValidDomainPattern(_ string: String) -> Bool {
+        // Handle localhost case
+        if string.hasPrefix("localhost") {
+            let remainder = String(string.dropFirst(9)) // "localhost".count = 9
+            return remainder.isEmpty || remainder.hasPrefix(":") || remainder.hasPrefix("/")
+        }
+
+        // Handle IP addresses
+        if isValidIPAddress(string) {
+            return true
+        }
+
+        // Handle domain names
+        return isValidDomainName(string)
+    }
+
+    /// Validates whether a string represents a valid IPv4 address.
+    ///
+    /// This method checks if the input string is a properly formatted IPv4 address,
+    /// optionally including a port number and/or path.
+    ///
+    /// - Parameter string: The string to validate as an IP address
+    /// - Returns: `true` if the string is a valid IPv4 address, `false` otherwise
+    ///
+    /// ## Supported Formats
+    /// - Basic IP: `192.168.1.1`
+    /// - IP with port: `192.168.1.1:8080`
+    /// - IP with path: `192.168.1.1/path`
+    /// - IP with port and path: `192.168.1.1:8080/path`
+    ///
+    /// ## Validation Rules
+    /// - Each octet must be between 0-255
+    /// - No leading zeros allowed (except for "0" itself)
+    /// - Port numbers must be between 1-65535
+    private func isValidIPAddress(_ string: String) -> Bool {
+        // Split by '/' to separate IP from path
+        let components = string.components(separatedBy: "/")
+        let ipPart = components[0]
+
+        // Split by ':' to separate IP from port
+        let ipPortComponents = ipPart.components(separatedBy: ":")
+        let ipOnly = ipPortComponents[0]
+
+        // Validate port if present
+        if ipPortComponents.count == 2 {
+            guard let port = Int(ipPortComponents[1]), port > 0, port <= 65535 else {
+                return false
+            }
+        } else if ipPortComponents.count > 2 {
+            return false
+        }
+
+        // Validate IP address format
+        let octets = ipOnly.components(separatedBy: ".")
+        guard octets.count == 4 else { return false }
+
+        for octet in octets {
+            guard let num = Int(octet), num >= 0, num <= 255 else {
+                return false
+            }
+            // Reject leading zeros (except for "0" itself)
+            if octet.count > 1, octet.hasPrefix("0") {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    /// Validates whether a string represents a valid domain name.
+    ///
+    /// This method checks if the input string is a properly formatted domain name,
+    /// optionally including a port number and/or path.
+    ///
+    /// - Parameter string: The string to validate as a domain name
+    /// - Returns: `true` if the string is a valid domain name, `false` otherwise
+    ///
+    /// ## Supported Formats
+    /// - Basic domain: `example.com`
+    /// - Subdomain: `subdomain.example.com`
+    /// - Domain with port: `example.com:8080`
+    /// - Domain with path: `example.com/path`
+    /// - Domain with port and path: `example.com:8080/path`
+    ///
+    /// ## Validation Rules
+    /// - Must contain at least one dot
+    /// - Must have at least 2 parts when split by dots
+    /// - Each domain part must be valid (no empty parts, proper characters)
+    /// - Top-level domain must be at least 2 characters and contain only letters
+    /// - Port numbers must be between 1-65535
+    private func isValidDomainName(_ string: String) -> Bool {
+        // Split by '/' to separate domain from path
+        let components = string.components(separatedBy: "/")
+        let domainPart = components[0]
+
+        // Split by ':' to separate domain from port
+        let domainPortComponents = domainPart.components(separatedBy: ":")
+        let domainOnly = domainPortComponents[0]
+
+        // Validate port if present
+        if domainPortComponents.count == 2 {
+            guard let port = Int(domainPortComponents[1]), port > 0, port <= 65535 else {
+                return false
+            }
+        } else if domainPortComponents.count > 2 {
+            return false
+        }
+
+        // Domain must contain at least one dot
+        guard domainOnly.contains(".") else { return false }
+
+        let parts = domainOnly.components(separatedBy: ".")
+        guard parts.count >= 2 else { return false }
+
+        // Validate each part of the domain
+        for part in parts {
+            if !isValidDomainPart(part) {
+                return false
+            }
+        }
+
+        // Last part (TLD) must be at least 2 characters and all letters
+        let tld = parts.last!
+        guard tld.count >= 2, tld.allSatisfy(\.isLetter) else {
+            return false
+        }
+
+        return true
+    }
+
+    /// Validates whether a string represents a valid domain name part.
+    ///
+    /// This method checks if a single part of a domain name (separated by dots)
+    /// follows proper domain naming conventions.
+    ///
+    /// - Parameter part: The domain part to validate
+    /// - Returns: `true` if the part is valid, `false` otherwise
+    ///
+    /// ## Validation Rules
+    /// - Cannot be empty
+    /// - Cannot start or end with a hyphen
+    /// - Can only contain alphanumeric characters and hyphens
+    /// - Must follow RFC 1123 hostname conventions
+    ///
+    /// ## Examples
+    /// - Valid: `example`, `sub-domain`, `test123`
+    /// - Invalid: ``, `-invalid`, `invalid-`, `invalid_part`
+    private func isValidDomainPart(_ part: String) -> Bool {
+        // Domain parts can't be empty
+        guard !part.isEmpty else { return false }
+
+        // Can't start or end with hyphen
+        if part.hasPrefix("-") || part.hasSuffix("-") {
+            return false
+        }
+
+        // Must contain only alphanumeric characters and hyphens
+        return part.allSatisfy { char in
+            char.isLetter || char.isNumber || char == "-"
+        }
+    }
 
     /// Adds a query to search history
     private func addToHistory(query: String) {
@@ -369,7 +535,8 @@ public class SearchManager {
     /// Fetches online suggestions from search engine
     private func fetchOnlineSuggestions(for query: String, baseURL: String) async {
         guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: baseURL + encodedQuery) else {
+              let url = URL(string: baseURL + encodedQuery)
+        else {
             return
         }
 
@@ -399,6 +566,9 @@ public class SearchManager {
                     self.suggestions = Array(uniqueSuggestions.prefix(maxSuggestions))
                 }
             }
+        } catch URLError.cancelled {
+            // Task gets canceled, no need to log the error because
+            // it's not really an error.
         } catch {
             // Silently fail - suggestions are optional
             print("Failed to fetch suggestions: \(error)")
@@ -425,7 +595,7 @@ public class SearchManager {
         // Try direct JSON parsing first, then fallback to string conversion if needed
         do {
             let json = try JSONSerialization.jsonObject(with: data) as? [Any]
-            if let json = json {
+            if let json {
                 return try parseGoogleJSON(json)
             }
         } catch {
@@ -436,7 +606,7 @@ public class SearchManager {
                    let jsonData = jsonString.data(using: .utf8) {
                     do {
                         let json = try JSONSerialization.jsonObject(with: jsonData) as? [Any]
-                        if let json = json {
+                        if let json {
                             return try parseGoogleJSON(json)
                         }
                     } catch {
@@ -445,13 +615,14 @@ public class SearchManager {
                 }
             }
         }
-        
+
         return []
     }
-    
+
     private func parseGoogleJSON(_ json: [Any]) throws -> [SearchSuggestion] {
         guard json.count > 1,
-              let suggestions = json[1] as? [String] else {
+              let suggestions = json[1] as? [String]
+        else {
             return []
         }
 
@@ -466,7 +637,8 @@ public class SearchManager {
         // Ensure data is properly encoded as UTF-8
         guard let jsonString = String(data: data, encoding: .utf8),
               let jsonData = jsonString.data(using: .utf8),
-              let json = try JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]] else {
+              let json = try JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]]
+        else {
             return []
         }
 
@@ -486,7 +658,8 @@ public class SearchManager {
               let json = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
               let suggestionGroups = json["suggestionGroups"] as? [[String: Any]],
               let firstGroup = suggestionGroups.first,
-              let searchSuggestions = firstGroup["searchSuggestions"] as? [[String: Any]] else {
+              let searchSuggestions = firstGroup["searchSuggestions"] as? [[String: Any]]
+        else {
             return []
         }
 
@@ -503,7 +676,8 @@ public class SearchManager {
     /// Loads search history from UserDefaults
     private func loadSearchHistory() {
         guard let data = UserDefaults.standard.data(forKey: historyKey),
-              let history = try? JSONDecoder().decode([SearchHistoryItem].self, from: data) else {
+              let history = try? JSONDecoder().decode([SearchHistoryItem].self, from: data)
+        else {
             return
         }
 
@@ -529,5 +703,4 @@ public extension SearchManager {
     static var privacySearchEngines: [SearchEngine] {
         [.duckduckgo, .brave, .startpage, .searx]
     }
- }
-
+}

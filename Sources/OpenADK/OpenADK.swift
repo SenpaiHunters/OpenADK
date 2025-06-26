@@ -1,52 +1,49 @@
 //
+
+//
+//  OpenADK.swift
+//  OpenADK
+//
+//  Created by StudioMovieGirl
+//
+
 import Observation
 import OpenADKObjC
 import SwiftUI
 
-public struct AltoConfiguration {
-    var name: String?
-}
+// MARK: - ADKData
 
+/// Alto is a singleton that allows for global app data such as tab instances or spaces
 @Observable
-public class Alto {
-    public static let shared = Alto()
+open class ADKData: ADKDataProtocol {
+    public static let shared = ADKData()
 
-    public let configuration: AltoConfiguration?
+    // MARK: - Properties
 
-    public var tabs: [UUID: any TabProtocol] = [:] // This will need to pull from storage
-    public var spaces: [SpaceProtocol] = []
-    public var profiles: String?
+    // Global shared data across browser windows
+    public var tabs: [UUID: ADKTab] = [:]
 
-    public let windowManager: WindowManager
-    public let cookieManager: CookiesManager
-    public let faviconManager: FaviconManager
-    public let contextManager: String?
-    public let paswordManager: String? // ToDo
-    public let downloadManager: String? // ToDo
-    public let modelManager: String? // ToDo (This will be AI intigration for local and cloud based LLMs)
-    
-    // public let searchManager: SearchManager
+    // MARK: - Initialization
 
-    
-    private init() {
-        configuration = nil
+    private init() {}
 
-        windowManager = WindowManager()
-        cookieManager = CookiesManager()
-        contextManager = nil
-        paswordManager = nil
-        downloadManager = nil
-        modelManager = nil
-        // searchManager = SearchManager()
-        faviconManager = FaviconManager()
+    // MARK: - Public Methods
 
-        if spaces.isEmpty {
-            spaces.append(Space())
+    /// Retreives a tab from the global tab storage via id
+    /// - Parameter id: The id of the tab
+    /// - Returns: A tab conforming to TabProtocol with that matching id or nil
+    public func getTab(id: UUID) -> ADKTab? {
+        guard let tab = tabs.first(where: { $0.key == id })?.value else {
+            return nil
         }
-    }
-
-    public func getTab(id: UUID) -> (any TabProtocol)? {
-        let tab = tabs.first(where: { $0.key == id })?.value
         return tab
     }
+}
+
+// MARK: - ADKDataProtocol
+
+public protocol ADKDataProtocol {
+    var tabs: [UUID: ADKTab] { get }
+
+    func getTab(id: UUID) -> ADKTab?
 }

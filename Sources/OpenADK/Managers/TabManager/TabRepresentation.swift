@@ -1,9 +1,16 @@
-
+//
+//  TabRepresentation.swift
+//  OpenADK
+//
+//  Created by StudioMovieGirl
+//
 
 internal import Algorithms
 import Observation
 import SwiftUI
 import UniformTypeIdentifiers
+
+// MARK: - TabRepresentation
 
 /// A structure to store the tab data for drag and drop
 public struct TabRepresentation: Transferable, Codable, Comparable, Hashable, Identifiable {
@@ -16,6 +23,7 @@ public struct TabRepresentation: Transferable, Codable, Comparable, Hashable, Id
         self.containerID = containerID
         self.index = index
     }
+
     /// tells the struct it should be represented as the custom UTType .tabItem
     public static var transferRepresentation: some TransferRepresentation {
         CodableRepresentation(contentType: .tabItem)
@@ -28,7 +36,6 @@ public struct TabRepresentation: Transferable, Codable, Comparable, Hashable, Id
 
     // this is for the toDrag system if it is needed
     func toItemProvider() -> NSItemProvider {
-        print("dragged")
         if let data = try? JSONEncoder().encode(self) {
             return NSItemProvider(item: data as NSData, typeIdentifier: "public.json")
         }
