@@ -1,5 +1,5 @@
 //
-//  WebPage.swift
+//  ADKWebPage.swift
 //  OpenADK
 //
 //  Created by StudioMovieGirl
@@ -29,11 +29,11 @@ public protocol Displayable {
     func goForward()
 
     func removeWebView()
-  
+
     func returnView() -> any View
 }
 
-// MARK: - WebPage
+// MARK: - ADKWebPage
 
 /// A simple webpage that conforms to the Tab Displayable protocol
 
@@ -315,7 +315,6 @@ extension ADKWebPage: WKScriptMessageHandler {
         } catch {
             print("❌ Error saving image: \(error)")
         }
-
     }
 }
 
@@ -332,14 +331,12 @@ extension ADKWebPage: WKNavigationDelegate, WKUIDelegate {
         if let url = webView.url {
             FaviconManager.shared.fetchFaviconFromHTML(webView: webView, baseURL: url) { [weak self] image in
                 DispatchQueue.main.async { self?.favicon = image }
-
             }
         }
 
         canGoBack = webView.canGoBack
         canGoForward = webView.canGoForward
     }
-
 
     /// Called when the web view is closed
     /// - Parameter webView: The web view that was closed
@@ -417,7 +414,6 @@ extension ADKWebPage: WKNavigationDelegate, WKUIDelegate {
         for navigationAction: WKNavigationAction,
         windowFeatures _: WKWindowFeatures
     ) -> WKWebView? {
-
         guard navigationAction.targetFrame == nil else { return nil }
 
         let newWebView = ADKWebView(frame: .zero, configuration: configuration)

@@ -1,5 +1,5 @@
 //
-//  AltoWebViewConfigurationBase.swift
+//  ADKWebViewConfigurationBase.swift
 //  Alto
 //
 //  Created by StudioMovieGirl

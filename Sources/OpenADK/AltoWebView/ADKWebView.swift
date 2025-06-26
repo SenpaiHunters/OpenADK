@@ -1,5 +1,5 @@
 //
-//  AltoWebView.swift
+//  ADKWebView.swift
 //  Alto
 //
 //  Created by StudioMovieGirl
@@ -8,7 +8,7 @@
 import AppKit
 import WebKit
 
-// MARK: - AltoWebView
+// MARK: - ADKWebView
 
 /// Custom verson of WKWebView to avoid needing an extra class for management
 @Observable

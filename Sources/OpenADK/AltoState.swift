@@ -1,5 +1,5 @@
 //
-//  ADKState.swift
+//  AltoState.swift
 //  OpenADK
 //
 //  Created by StudioMovieGirl
