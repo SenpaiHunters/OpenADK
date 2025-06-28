@@ -1,6 +1,4 @@
 //
-
-//
 //  OpenADK.swift
 //  OpenADK
 //

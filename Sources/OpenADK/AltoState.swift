@@ -1,21 +1,23 @@
 //
-//  ADKState.swift
+//  AltoState.swift
 //  OpenADK
 //
 //  Created by StudioMovieGirl
 //
 
 import Combine
+import Foundation
 import Observation
+import OSLog
 import WebKit
 
 // MARK: - ADKState
 
-/// ADKState provides a state for each window specificaly
-/// Allows each window to display a diferent view of the tabs
+/// ADKState provides a state for each window specifically
+/// Allows each window to display a different view of the tabs
 @Observable
 open class ADKState: ADKStateRepresentable {
-    // MARK: - Peramaters
+    // MARK: - Parameters
 
     public var id = UUID()
     public var tabManager: ADKTabManager
@@ -26,9 +28,9 @@ open class ADKState: ADKStateRepresentable {
         return tabManager.currentTab?.content // TODO: Move current tab to tab manager
     }
 
-    // MARK: - Initilizer
+    // MARK: - Initializer
 
-    /// Automaticly asignes the managers state and sets up spaces
+    /// Automatically assigns the managers state and sets up spaces
     public init(tabManager: ADKTabManager = ADKTabManager()) {
         self.tabManager = tabManager
         tabManager.state = self // Feeds in the state for the tab manager

@@ -1,5 +1,5 @@
 //
-//  ADKTab.swift
+//  AltoTab.swift
 //  OpenADK
 //
 //  Created by StudioMovieGirl

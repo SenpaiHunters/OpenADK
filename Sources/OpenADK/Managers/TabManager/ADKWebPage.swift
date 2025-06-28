@@ -1,12 +1,12 @@
 //
-//  WebPage.swift
+//  ADKWebPage.swift
 //  OpenADK
 //
 //  Created by StudioMovieGirl
 //
 
+import Foundation
 import SwiftUI
-
 import UniformTypeIdentifiers
 import WebKit
 
@@ -29,11 +29,11 @@ public protocol Displayable {
     func goForward()
 
     func removeWebView()
-  
+
     func returnView() -> any View
 }
 
-// MARK: - WebPage
+// MARK: - ADKWebPage
 
 /// A simple webpage that conforms to the Tab Displayable protocol
 
@@ -315,7 +315,6 @@ extension ADKWebPage: WKScriptMessageHandler {
         } catch {
             print("❌ Error saving image: \(error)")
         }
-
     }
 }
 
@@ -332,7 +331,16 @@ extension ADKWebPage: WKNavigationDelegate, WKUIDelegate {
         if let url = webView.url {
             FaviconManager.shared.fetchFaviconFromHTML(webView: webView, baseURL: url) { [weak self] image in
                 DispatchQueue.main.async { self?.favicon = image }
+            }
 
+            // Notify extension runtime about navigation completion
+            if let altoWebView = webView as? ADKWebView {
+                altoWebView.notifyExtensionNavigationCompleted(to: url)
+            }
+
+            // Check if this is a Chrome Web Store page and inject Alto controls
+            Task { @MainActor in
+                await self.injectWebStoreControlsIfNeeded(webView: webView, url: url)
             }
         }
 
@@ -340,6 +348,80 @@ extension ADKWebPage: WKNavigationDelegate, WKUIDelegate {
         canGoForward = webView.canGoForward
     }
 
+    /// Called when a provisional navigation fails
+    /// - Parameters:
+    ///   - webView: The web view that failed to load
+    ///   - navigation: The failed navigation
+    ///   - error: The error that occurred
+    public func webView(
+        _ webView: WKWebView,
+        didFailProvisionalNavigation navigation: WKNavigation!,
+        withError error: Error
+    ) {
+        let url = webView.url?.absoluteString ?? "unknown"
+        print("❌ WebView failed provisional navigation: \(url), Error: \(error)")
+
+        // Check if this is a WebKit content blocker error (code 104)
+        let nsError = error as NSError
+        if nsError.domain == "WebKitErrorDomain", nsError.code == 104 {
+            print("🛡️ Content blocked by ad blocker: \(url)")
+
+            // Get the blocked URL from multiple sources
+            var blockedURL = webView.url
+            if let errorURL = nsError.userInfo[NSURLErrorFailingURLErrorKey] as? URL {
+                blockedURL = errorURL
+                print("🎯 Using blocked URL from error userInfo: \(errorURL)")
+            } else if let errorURLString = nsError.userInfo[NSURLErrorFailingURLStringErrorKey] as? String,
+                      let parsedURL = URL(string: errorURLString) {
+                blockedURL = parsedURL
+                print("🎯 Using blocked URL from error string: \(parsedURL)")
+            }
+
+            // Post notification for the blocking manager to handle
+            if let blockedURL {
+                print("📢 Posting contentWasBlocked notification for: \(blockedURL)")
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(
+                        name: .contentWasBlocked,
+                        object: webView,
+                        userInfo: [
+                            "url": blockedURL,
+                            "error": error,
+                            "webPage": self
+                        ]
+                    )
+                    print("📤 Notification posted successfully")
+                }
+            } else {
+                print("⚠️ No blocked URL found to show popup for")
+            }
+        } else {
+            // Handle other WebKit errors with the old retry logic
+            print("🔧 Attempting to recover from WebKit error \(nsError.code)")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                if let currentURL = webView.url {
+                    print("🔄 Reloading page: \(currentURL)")
+                    webView.reload()
+                }
+            }
+        }
+    }
+
+    /// Called when a navigation fails after committing
+    /// - Parameters:
+    ///   - webView: The web view that failed to load
+    ///   - navigation: The failed navigation
+    ///   - error: The error that occurred
+    public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        let url = webView.url?.absoluteString ?? "unknown"
+        print("❌ WebView navigation failed: \(url), Error: \(error)")
+
+        // Update loading state
+        isLoading = false
+
+        // Could implement error page handling here
+        title = "Error Loading Page"
+    }
 
     /// Called when the web view is closed
     /// - Parameter webView: The web view that was closed
@@ -417,7 +499,6 @@ extension ADKWebPage: WKNavigationDelegate, WKUIDelegate {
         for navigationAction: WKNavigationAction,
         windowFeatures _: WKWindowFeatures
     ) -> WKWebView? {
-
         guard navigationAction.targetFrame == nil else { return nil }
 
         let newWebView = ADKWebView(frame: .zero, configuration: configuration)
@@ -584,5 +665,18 @@ extension ADKWebPage: WKNavigationDelegate, WKUIDelegate {
         state.tabManager.setActiveTab(newTab)
 
         return webView
+    }
+
+    // MARK: - Chrome Web Store Integration
+
+    /// Inject Alto controls into Chrome Web Store pages if needed
+    /// - Parameters:
+    ///   - webView: The web view displaying the page
+    ///   - url: The current URL
+    @MainActor
+    private func injectWebStoreControlsIfNeeded(webView: WKWebView, url: URL) async {
+        // Web Store controls are now handled centrally by ExtensionRuntime
+        // This prevents duplicate injections
+        print("🔗 Web Store control injection delegated to ExtensionRuntime")
     }
 }

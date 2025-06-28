@@ -1,40 +1,42 @@
 // swift-tools-version:5.9
+// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 let package = Package(
     name: "OpenADK",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v13)
     ],
     products: [
+        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "OpenADK",
             targets: ["OpenADK"]
+        ),
+        .library(
+            name: "OpenADKObjC",
+            targets: ["OpenADKObjC"]
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-algorithms.git", from: "1.2.0"),
-        .package(url: "https://github.com/apple/swift-numerics.git", from: "1.0.0")
+        // Dependencies declare other packages that this package depends on.
     ],
     targets: [
-        .target(
-            name: "OpenADKObjC",
-            dependencies: [
-                .product(name: "Algorithms", package: "swift-algorithms"),
-                .product(name: "Numerics", package: "swift-numerics")
-            ],
-            path: "Sources/OpenADKObjC",
-            publicHeadersPath: "."
-        ),
+        // Targets are the basic building blocks of a package, defining a module or a test suite.
+        // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "OpenADK",
-            dependencies: [
-                "OpenADKObjC",
-                .product(name: "Algorithms", package: "swift-algorithms"),
-                .product(name: "Numerics", package: "swift-numerics")
-            ],
-            path: "Sources/OpenADK"
+            dependencies: ["OpenADKObjC"],
+            path: "Sources/OpenADK",
+            exclude: [
+                "OpenADK.docc/OpenADK.md"
+            ]
+        ),
+        .target(
+            name: "OpenADKObjC",
+            path: "Sources/OpenADKObjC",
+            publicHeadersPath: "."
         ),
         .testTarget(
             name: "OpenADKTests",

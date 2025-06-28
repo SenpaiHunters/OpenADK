@@ -52,6 +52,7 @@ struct FaviconCacheEntry: Codable {
 @Observable
 public class FaviconManager {
     public static let shared = FaviconManager()
+
     // MARK: - Properties
 
     private let cacheDirectory: URL
